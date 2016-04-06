@@ -46,6 +46,7 @@ window.onload = function() {
     var spin;
     var sound;
     var comet;
+    var comet2;
     var cometSpread = 0.1
     
     
@@ -71,8 +72,8 @@ window.onload = function() {
         masses = game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
-        player = masses.create(game.world.centerX, game.world.centerY, 'asteroid' );
-        
+        //player = masses.create(game.world.centerX, game.world.centerY, 'asteroid' );
+        player = game.add.sprite(game.world.centerX, game.world.centerY, 'asteroid' );
         // Camera will follow player around the playable area
         game.camera.follow(player);
         game.camera.deadzone = new Phaser.Rectangle(100, 100, 800, 400);
@@ -81,6 +82,8 @@ window.onload = function() {
         game.physics.p2.enable(player); 
         player.body.x = 800;
         player.body.y = 800;
+        player.x = 800;
+        player.y = 800;
         
         // Initialize relative physical parameters of the player
         player.body.mass = playerStartMass;
@@ -139,6 +142,11 @@ window.onload = function() {
         comet.body.velocity.y = 50;
         
         masses.add(comet);
+        
+        comet2 = createComet();
+        comet2.body.velocity.x = 500;
+        comet2.body.velocity.y = 500;
+        masses.add(comet2);
     }
     
     
@@ -161,6 +169,8 @@ window.onload = function() {
         debugGame(); // Display some text with information
         comet.emitter.x = comet.x;
         comet.emitter.y = comet.y;
+        comet2.emitter.x = comet2.x;
+        comet2.emitter.y = comet2.y;
         comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
         comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
         
@@ -288,40 +298,40 @@ window.onload = function() {
     
     // Calculates the center of mass for the entire set of masses in a group, then applies a gravitational force to each mass in the group towards the center of mass
     function apply_forces(group) {
-        var mass_product_sum = get_product_sum(group);  
-        var mass_sum = get_mass_sum(group);
-
-        // F = G * m1m2/r^2
-        group.forEachAlive(function(item) {
-            
-            // Calculate center of mass, excluding the current mass
-            var com_x = (mass_product_sum.x - (item.body.mass * item.x)) / (mass_sum - item.body.mass);
-            var com_y = (mass_product_sum.y - (item.body.mass * item.y)) / (mass_sum - item.body.mass);
-            
-            var angle = get_angle(item, {"x":com_x, "y":com_y}); // Angle between current mass and center of mass
-            var r2 = get_r2(item, {"x":com_x, "y":com_y}); // Angle between current mass and the center of mass
-            
-            item.body.force.x = (G * Math.cos(angle) * mass_product_sum.x / r2);
-            item.body.force.y = (G * Math.sin(angle) * mass_product_sum.y / r2);
-            
-            constrain_acceleration(item); // Limit acceleration
-        }); 
-        
+//        var mass_product_sum = get_product_sum(group);  
+//        var mass_sum = get_mass_sum(group);
+//
+//        // F = G * m1m2/r^2
 //        group.forEachAlive(function(item) {
-////            if(item.emitter) {
-////                apply_forces(item.emitter);
-////            }
-//                
-//            var angle = get_angle(item, player.body);
-//            var r2 = get_r2(item, player.body);
 //            
-//            item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
-//            item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
-//            constrain_acceleration(item); 
+//            // Calculate center of mass, excluding the current mass
+//            var com_x = (mass_product_sum.x - (item.body.mass * item.x)) / (mass_sum - item.body.mass);
+//            var com_y = (mass_product_sum.y - (item.body.mass * item.y)) / (mass_sum - item.body.mass);
 //            
+//            var angle = get_angle(item, {"x":com_x, "y":com_y}); // Angle between current mass and center of mass
+//            var r2 = get_r2(item, {"x":com_x, "y":com_y}); // Angle between current mass and the center of mass
 //            
+//            item.body.force.x = (G * Math.cos(angle) * mass_product_sum.x / r2);
+//            item.body.force.y = (G * Math.sin(angle) * mass_product_sum.y / r2);
 //            
-//        });
+//            constrain_acceleration(item); // Limit acceleration
+//        }); 
+        
+        group.forEachAlive(function(item) {
+//            if(item.emitter) {
+//                apply_forces(item.emitter);
+//            }
+                
+            var angle = get_angle(item, player);
+            var r2 = get_r2(item, player);
+            
+            item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
+            item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
+            constrain_acceleration(item); 
+            
+            
+            
+        });
     }
     
     function get_mass_sum(group) {
