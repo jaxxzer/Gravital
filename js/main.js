@@ -18,12 +18,16 @@ window.onload = function() {
     function preload() {
         game.load.audio('blip', 'assets/Blip.ogg');
         game.load.spritesheet('asteroid', 'assets/asteroid_sprite_sheet.png', 128, 128, 32);
+        game.load.image('ball', 'assets/blueball.png');
     }
     
     var player;
     var text;
     
-    var G = 0.50; // Gravitational constant
+    var worldBuffer = 150;
+    
+    //var G = 0.50;
+    var G = 5000; // Gravitational constant
     var accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
     
     var masses; // Group of all masses in the game
@@ -35,11 +39,14 @@ window.onload = function() {
     
     var playerStartMass = 100.0; // The initial mass of the player
     
-    var numEnemies = 1000; // Number of masses other than the player that will be created
+    var numEnemies = 50; // Number of masses other than the player that will be created
     
     var asteroid;
     var spin;
     var sound;
+    var comet;
+    var cometSpread = 0.1
+    
     
     function create() {
         // Create sound sprite for blip noise
@@ -69,7 +76,9 @@ window.onload = function() {
         
         // P2 physics suits all masses
         game.physics.p2.enable(player); 
-
+        player.body.x = 800;
+        player.body.y = 800;
+        
         // Initialize relative physical parameters of the player
         player.body.mass = playerStartMass;
         player.body.density = playerDensity;
@@ -98,6 +107,10 @@ window.onload = function() {
 
             mass.body.collides(massCollisionGroup);
             mass.body.collideWorldBounds = false;
+            
+            mass.body.velocity.x = game.rnd.integerInRange(-250,250);
+            mass.body.velocity.y = game.rnd.integerInRange(-250,250);
+            mass.body.damping = 0;
         }
 
         // Add some text using a CSS style.
@@ -105,13 +118,32 @@ window.onload = function() {
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
         text = game.add.text( game.world.centerX, 15, "Build something awesome.", style );
         text.anchor.setTo(0.5, 0.0);
+        
+        
+//        comet = game.add.emitter(800, 800, 500);
+//        comet.minParticleScale = 0.01;
+//        comet.maxParticleScale = 0.01;
+//        //comet.setScale(0.02,0.03, 0.02, 0.03);
+//        comet.makeParticles('ball');
+//        comet.setXSpeed(-100, 100);
+//        comet.setYSpeed(-100, 100);
+//        comet.gravity = 0;
+//        //comet.scale = 0.2;
+//        
+//        comet.start(false, 5000, 20);
+        comet = createComet();
+        comet.body.velocity.x = 50;
+        comet.body.velocity.y = 50;
+        
+        masses.add(comet);
     }
     
-    function update() {
-        player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
-        
-        apply_forces(masses); // Apply gravitational force calculation to every mass in the game
+    
 
+    function update() {
+        //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
+        
+        apply_forces(masses);
         // Add gravitational force between the player and the mouse, so that the player can be moved with the mouse
         var angle = get_angle(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
         var r2 = get_r2(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
@@ -120,11 +152,63 @@ window.onload = function() {
         player.body.force.y += (10000 * G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
         constrain_acceleration(player);
         
+//        player.body.x = game.input.mousePointer.x;
+//        player.body.y = game.input.mousePointer.y;
+        
         debugGame(); // Display some text with information
+        comet.emitter.x = comet.x;
+        comet.emitter.y = comet.y;
+        comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
+        comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+        
+        updateBounds(masses);
+         // Apply gravitational force calculation to every mass in the game
+        //apply_forces(comet.emitter);
+    }
+    
+    function updateBounds(group) {
+        group.forEachAlive(function(item) {
+            
+            if(item.body.x < 0 - worldBuffer) {
+                item.body.x = game.world.width + worldBuffer;
+            } else if(item.body.x > game.world.width + worldBuffer) {
+                item.body.x = 0 - worldBuffer;
+            }
+            
+            if(item.body.y < 0 - worldBuffer) {
+                item.body.y = game.world.height + worldBuffer;
+            } else if(item.body.y > game.world.height + worldBuffer) {
+                item.body.y = 0 - worldBuffer;
+            }
+        }); 
+    }
+    
+    function createComet() {
+        var comet = game.add.sprite(0, 0, 'ball');
+        comet.anchor.setTo(0.5);
+        comet.scale.setTo(0.03);
+        
+        game.physics.p2.enable(comet);
+        comet.body.mass = 0.00001;
+        comet.body.damping = 0;
+        comet.emitter = game.add.emitter(comet.x, comet.y, 300);
+        comet.emitter.physicsBodyType = 2;
+        comet.emitter.enableBody = true;
+        comet.emitter.enableBodyDebug = true;
+        comet.emitter.minParticleScale = 0.01;
+        comet.emitter.maxParticleScale = 0.01;
+        comet.emitter.makeParticles('ball');
+        comet.emitter.setAll('body.mass', 0.00001);
+        comet.emitter.setXSpeed(-100, 100);
+        comet.emitter.setYSpeed(-100, 100);
+        comet.emitter.gravity = 0;
+        comet.emitter.start(false, 5000, 10);
+        
+        return comet;
     }
     
     function render() {
-//        game.debug.body(player);
+        game.debug.body(comet.emitter);
 //        game.debug.cameraInfo(game.camera, 32, 32);
     }
     
@@ -133,7 +217,9 @@ window.onload = function() {
                         player.mass: " 
                     + player.body.mass.toFixed(4)
                     + "\nplayer.radius: "
-                    + player.height/2);
+                    + player.height/2
+                    + "\nx: " + player.x + " y: " + player.y
+                    + "\ncomettype: " + player.body.force.x);
         text.x = game.camera.x + text.width;
         text.y = game.camera.y + game.camera.height - text.height;
     }
@@ -217,6 +303,22 @@ window.onload = function() {
             
             constrain_acceleration(item); // Limit acceleration
         }); 
+        
+//        group.forEachAlive(function(item) {
+////            if(item.emitter) {
+////                apply_forces(item.emitter);
+////            }
+//                
+//            var angle = get_angle(item, player.body);
+//            var r2 = get_r2(item, player.body);
+//            
+//            item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
+//            item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
+//            constrain_acceleration(item); 
+//            
+//            
+//            
+//        });
     }
     
     function get_mass_sum(group) {
