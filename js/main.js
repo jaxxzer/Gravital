@@ -19,8 +19,9 @@ window.onload = function() {
         game.load.audio('blip', 'assets/Blip.ogg');
         game.load.spritesheet('asteroid', 'assets/asteroid_sprite_sheet.png', 128, 128, 32);
         game.load.image('ball', 'assets/blueball.png');
+        game.load.image('space', 'assets/SPACE.jpg');
     }
-    
+    var tilesprite;
     var player;
     var text;
     
@@ -49,6 +50,8 @@ window.onload = function() {
     
     
     function create() {
+        tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space');
+        
         // Create sound sprite for blip noise
     	sound = game.add.audio('blip');
     	sound.allowMultiple = true;
