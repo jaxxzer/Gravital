@@ -143,9 +143,9 @@ window.onload = function() {
         comet2.body.velocity.y = 500;
         masses.add(comet2);
         
-        jupiter = createGasPlanet(800,800);
+        jupiter = createGasPlanet(600,600);
         
-        gasTimer = game.time.events.loop(Phaser.Timer.SECOND, ressurect, this);
+        //gasTimer = game.time.events.loop(Phaser.Timer.SECOND, ressurect, this);
         
     }
     
@@ -180,6 +180,9 @@ window.onload = function() {
         comet2.emitter.y = comet2.y;
         comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
         comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+        comet2.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
+        comet2.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+        
         
         updateBounds(masses);
         updateGasPlanets();
@@ -193,14 +196,16 @@ window.onload = function() {
         var distance = get_dist(player, jupiter);
         distance -= jupiter.height/2;
         
-        text.setText("hey: " + distance);
+        
         text.x = game.camera.x + text.width;
         text.y = game.camera.y + game.camera.height - text.height;
-        if(distance > 200) {
-            //gasTimer.loop = false;
-        } else {
-            //gasTimer.loop = true;
-            gasTimer.delay = distance;
+        
+        if(distance > 400) {
+            jupiter.timer.pause();
+        } else{
+            
+            jupiter.timer.resume();
+       jupiter.timer.events[0].delay = distance*2;
         }
         
         
@@ -232,11 +237,20 @@ window.onload = function() {
     function createGasPlanet(x, y) {
         var planet = game.add.sprite(x,y, 'ball');
         planet.anchor.setTo(0.5);
-        planet.scale.setTo(0.05);
+        planet.scale.setTo(0.3);
         game.physics.p2.enable(planet);
+        
+        planet.timer = game.time.create(true);
+        planet.timer.loop(1000, ressurect, this);
+        planet.timer.start();
+        
+        
+        
         planet.gas = game.add.group();
         
-        for(var i = 0; i < 30; i++) {
+        
+        
+        for(var i = 0; i < 90; i++) {
             var temp = planet.gas.create(500, 500, 'ball');
             game.physics.p2.enable(temp);
             temp.body.setCircle(10);
@@ -257,6 +271,10 @@ window.onload = function() {
     function emitGas(GasPlanet) {
         var nextgas = GasPlanet.gas.getFirstDead();
         if(nextgas) {
+            var angle = get_angle(GasPlanet, player);
+            text.setText(angle);
+            angle += game.rnd.frac() * 0.3 *game.rnd.integerInRange(-1,1);
+            nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.height/2 - nextgas.height/2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height/2));
             nextgas.revive();
         }
     }
