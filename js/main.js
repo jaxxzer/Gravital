@@ -34,6 +34,7 @@ window.onload = function() {
     var masses; // Group of all masses in the game
     var massCollisionGroup; // CollisionGroup for the masses
     var mass;
+    var gasCollisionGroup;
     
     var enemyDensity = 100.0; // Density of enemies
     var playerDensity = 100.0; // Density of the player
@@ -47,8 +48,10 @@ window.onload = function() {
     var sound;
     var comet;
     var comet2;
-    var cometSpread = 0.1
+    var cometSpread = 0.1;
+    var jupiter;
     
+    var gasTimer;
     
     function create() {
         tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space');
@@ -65,6 +68,7 @@ window.onload = function() {
         
         //Create new CollisionGroup for the masses
     	massCollisionGroup = game.physics.p2.createCollisionGroup();
+        gasCollisionGroup = game.physics.p2.createCollisionGroup();
         game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
         game.physics.p2.setImpactEvents(true);
         
@@ -91,10 +95,11 @@ window.onload = function() {
         updateSize(player); // Adjust size of the sprite
         
         // Enable collisions between the player and children of massCollisionGroup
-        player.body.collides(massCollisionGroup);
+        player.body.collides([massCollisionGroup, gasCollisionGroup]);
         
         // Set the callback method when player collides with another mass
         player.body.createGroupCallback(massCollisionGroup, absorb, this);
+        player.body.createGroupCallback(gasCollisionGroup, returnGas, this);
         
 //        player.body.debug = true; // Will show the P2 physics body
         
@@ -126,30 +131,32 @@ window.onload = function() {
         text.anchor.setTo(0.5, 0.0);
         
         
-//        comet = game.add.emitter(800, 800, 500);
-//        comet.minParticleScale = 0.01;
-//        comet.maxParticleScale = 0.01;
-//        //comet.setScale(0.02,0.03, 0.02, 0.03);
-//        comet.makeParticles('ball');
-//        comet.setXSpeed(-100, 100);
-//        comet.setYSpeed(-100, 100);
-//        comet.gravity = 0;
-//        //comet.scale = 0.2;
-//        
-//        comet.start(false, 5000, 20);
-        comet = createComet();
-        comet.body.velocity.x = 50;
-        comet.body.velocity.y = 50;
+        comet = createComet(500,500);
+        comet.body.velocity.x = 5;
+        comet.body.velocity.y = 5;
+        
         
         masses.add(comet);
         
-        comet2 = createComet();
+        comet2 = createComet(0,0);
         comet2.body.velocity.x = 500;
         comet2.body.velocity.y = 500;
         masses.add(comet2);
+        
+        jupiter = createGasPlanet(800,800);
+        
+        gasTimer = game.time.events.loop(Phaser.Timer.SECOND, ressurect, this);
+        
     }
     
+    function ressurect() {
+        emitGas(jupiter);
+    }
     
+    function returnGas(body1, body2) {
+        body2.sprite.reset(body2.planetX, body2.planetY);
+        body2.sprite.kill();
+    }
 
     function update() {
         //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
@@ -159,14 +166,14 @@ window.onload = function() {
         var angle = get_angle(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
         var r2 = get_r2(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
         
-        player.body.force.x += (10000 * G * Math.cos(angle) * player.body.mass * player.body.mass / r2);
-        player.body.force.y += (10000 * G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
+        player.body.force.x += (G * Math.cos(angle) * player.body.mass * player.body.mass / r2);
+        player.body.force.y += (G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
         constrain_acceleration(player);
         
 //        player.body.x = game.input.mousePointer.x;
 //        player.body.y = game.input.mousePointer.y;
         
-        debugGame(); // Display some text with information
+        //debugGame(); // Display some text with information
         comet.emitter.x = comet.x;
         comet.emitter.y = comet.y;
         comet2.emitter.x = comet2.x;
@@ -175,37 +182,95 @@ window.onload = function() {
         comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
         
         updateBounds(masses);
+        updateGasPlanets();
          // Apply gravitational force calculation to every mass in the game
         //apply_forces(comet.emitter);
+        
+        
+    }
+    
+    function updateGasPlanets() {
+        var distance = get_dist(player, jupiter);
+        distance -= jupiter.height/2;
+        
+        text.setText("hey: " + distance);
+        text.x = game.camera.x + text.width;
+        text.y = game.camera.y + game.camera.height - text.height;
+        if(distance > 200) {
+            //gasTimer.loop = false;
+        } else {
+            //gasTimer.loop = true;
+            gasTimer.delay = distance;
+        }
+        
+        
     }
     
     function updateBounds(group) {
         group.forEachAlive(function(item) {
             
-            if(item.body.x < 0 - worldBuffer) {
-                item.body.x = game.world.width + worldBuffer;
-            } else if(item.body.x > game.world.width + worldBuffer) {
-                item.body.x = 0 - worldBuffer;
-            }
+            if(item.length > 0) {
+                
+                updateBounds(item);
+            } else {
             
-            if(item.body.y < 0 - worldBuffer) {
-                item.body.y = game.world.height + worldBuffer;
-            } else if(item.body.y > game.world.height + worldBuffer) {
-                item.body.y = 0 - worldBuffer;
+                if(item.body.x < 0 - worldBuffer) {
+                    item.body.x = game.world.width + worldBuffer;
+                } else if(item.body.x > game.world.width + worldBuffer) {
+                    item.body.x = 0 - worldBuffer;
+                }
+
+                if(item.body.y < 0 - worldBuffer) {
+                    item.body.y = game.world.height + worldBuffer;
+                } else if(item.body.y > game.world.height + worldBuffer) {
+                    item.body.y = 0 - worldBuffer;
+                }
             }
         }); 
     }
     
-    function createComet() {
-        var comet = game.add.sprite(0, 0, 'ball');
+    function createGasPlanet(x, y) {
+        var planet = game.add.sprite(x,y, 'ball');
+        planet.anchor.setTo(0.5);
+        planet.scale.setTo(0.05);
+        game.physics.p2.enable(planet);
+        planet.gas = game.add.group();
+        
+        for(var i = 0; i < 30; i++) {
+            var temp = planet.gas.create(500, 500, 'ball');
+            game.physics.p2.enable(temp);
+            temp.body.setCircle(10);
+            temp.body.setCollisionGroup(gasCollisionGroup);
+            temp.scale.setTo(0.05);
+            temp.kill();
+            temp.body.collides(massCollisionGroup);
+            temp.body.damping = 0;
+            temp.body.mass = 10;
+            temp.body.massType = 'special';
+            temp.body.planetX = planet.x;
+            temp.body.planetY = planet.y;
+        }
+        masses.add(planet.gas);
+        return planet;
+    }
+    
+    function emitGas(GasPlanet) {
+        var nextgas = GasPlanet.gas.getFirstDead();
+        if(nextgas) {
+            nextgas.revive();
+        }
+    }
+    
+    function createComet(x, y) {
+        var comet = game.add.sprite(x, y, 'ball');
         comet.anchor.setTo(0.5);
         comet.scale.setTo(0.03);
         
         game.physics.p2.enable(comet);
-        comet.body.mass = 0.00001;
+        comet.body.mass = 0.0001;
         comet.body.damping = 0;
         comet.emitter = game.add.emitter(comet.x, comet.y, 300);
-        comet.emitter.physicsBodyType = 2;
+        comet.emitter.physicsBodyType = Phaser.Physics.P2;
         comet.emitter.enableBody = true;
         comet.emitter.enableBodyDebug = true;
         comet.emitter.minParticleScale = 0.01;
@@ -252,37 +317,42 @@ window.onload = function() {
     
     // Recycle an enemy mass by moving it offscreen and giving it a new mass
     function resetBody(body) {
-        var side = game.rnd.integerInRange(1,4);
-        var newX, newY;
-        switch(side) { // Chose an edge of the world to locate the sprite (offscreen)
-            case 1: // Top
-                newX = game.rnd.integerInRange(-100, game.world.width+100);
-                newY = game.rnd.integerInRange(-150,-50);
-                break;
-            case 2: // Bottom
-                newX = game.rnd.integerInRange(-100, game.world.width+100);
-                newY = game.rnd.integerInRange(game.world.height + 50, game.world.height + 150);
-                break;
-            case 3: // Left
-                newX = game.rnd.integerInRange(-150,-50);
-                newY = game.rnd.integerInRange(-100, game.world.height + 100);
-                break;
-            case 4: // Right
-            default:
-                newX = game.rnd.integerInRange(game.world.width + 50, game.world.width + 150);
-                newY = game.rnd.integerInRange(-100, game.world.height + 100);
-                
+        if(body.massType == 'special') {
+            body.sprite.kill();
+           
+        } else {
+            var side = game.rnd.integerInRange(1,4);
+            var newX, newY;
+            switch(side) { // Chose an edge of the world to locate the sprite (offscreen)
+                case 1: // Top
+                    newX = game.rnd.integerInRange(-100, game.world.width+100);
+                    newY = game.rnd.integerInRange(-150,-50);
+                    break;
+                case 2: // Bottom
+                    newX = game.rnd.integerInRange(-100, game.world.width+100);
+                    newY = game.rnd.integerInRange(game.world.height + 50, game.world.height + 150);
+                    break;
+                case 3: // Left
+                    newX = game.rnd.integerInRange(-150,-50);
+                    newY = game.rnd.integerInRange(-100, game.world.height + 100);
+                    break;
+                case 4: // Right
+                default:
+                    newX = game.rnd.integerInRange(game.world.width + 50, game.world.width + 150);
+                    newY = game.rnd.integerInRange(-100, game.world.height + 100);
+
+            }
+
+            body.reset(newX, newY); // Put the sprite there
+            newEnemy(body.sprite); // Give the sprite a new mass / size
         }
-        
-        body.reset(newX, newY); // Put the sprite there
-        newEnemy(body.sprite); // Give the sprite a new mass / size
     }
     
     // This will spawn new enemies according to the context of the game
     // Enemy types might be asteroids, planets, moons, stars, comets, dust, or black holes
     // The likleyhood of each type of enemy spawning could be set to tune gameplay experience
     function newEnemy(sprite) {
-        sprite.body.mass = 10 * game.rnd.frac() * player.body.mass/numEnemies;
+        sprite.body.mass = 5 * game.rnd.frac() * player.body.mass/numEnemies;
         updateSize(sprite);
     }
     
@@ -294,6 +364,10 @@ window.onload = function() {
     // Returns the distance squared between two objects
     function get_r2(object1, object2) {
         return ((object2.x - object1.x) * (object2.x - object1.x)) + ((object2.y - object1.y) *  (object2.y - object1.y));
+    }
+    
+    function get_dist(object1, object2) {
+        return Math.sqrt(get_r2(object1, object2));
     }
     
     // Calculates the center of mass for the entire set of masses in a group, then applies a gravitational force to each mass in the group towards the center of mass
@@ -318,21 +392,20 @@ window.onload = function() {
 //        }); 
         
         group.forEachAlive(function(item) {
-//            if(item.emitter) {
-//                apply_forces(item.emitter);
-//            }
+            if(item.length > 0) {
+                apply_forces(item);
+            } else {
                 
             var angle = get_angle(item, player);
             var r2 = get_r2(item, player);
             
             item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
             item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
-            constrain_acceleration(item); 
-            
-            
-            
+            constrain_acceleration(item);
+            }
         });
     }
+
     
     function get_mass_sum(group) {
         var sum = 0.0;
