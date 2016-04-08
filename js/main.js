@@ -321,8 +321,7 @@ window.onload = function() {
                     + player.body.mass.toFixed(4)
                     + "\nplayer.radius: "
                     + player.height/2
-                    + "\nx: " + player.x + " y: " + player.y
-                    + "\ncomettype: " + player.body.force.x);
+                    + "\nx: " + player.x + " y: " + player.y);
         text.x = game.camera.x + text.width;
         text.y = game.camera.y + game.camera.height - text.height;
     }
