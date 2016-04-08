@@ -143,7 +143,7 @@ window.onload = function() {
         comet2.body.velocity.y = 500;
         masses.add(comet2);
         
-        jupiter = createGasPlanet(600,600);
+        jupiter = createGasPlanet(1100,400);
         
         //gasTimer = game.time.events.loop(Phaser.Timer.SECOND, ressurect, this);
         
@@ -205,7 +205,7 @@ window.onload = function() {
         } else{
             
             jupiter.timer.resume();
-       jupiter.timer.events[0].delay = distance*2;
+       jupiter.timer.events[0].delay = distance;
         }
         
         
@@ -237,8 +237,12 @@ window.onload = function() {
     function createGasPlanet(x, y) {
         var planet = game.add.sprite(x,y, 'ball');
         planet.anchor.setTo(0.5);
-        planet.scale.setTo(0.3);
+        planet.scale.setTo(2);
+        
         game.physics.p2.enable(planet);
+        planet.body.mass = 500;
+        planet.body.density = 50;
+        masses.add(planet);
         
         planet.timer = game.time.create(true);
         planet.timer.loop(1000, ressurect, this);
@@ -265,6 +269,7 @@ window.onload = function() {
             temp.body.planetY = planet.y;
         }
         masses.add(planet.gas);
+        updateSize(planet);
         return planet;
     }
     
@@ -275,6 +280,7 @@ window.onload = function() {
             text.setText(angle);
             angle += game.rnd.frac() * 0.3 *game.rnd.integerInRange(-1,1);
             nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.height/2 - nextgas.height/2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height/2));
+            //GasPlanet.body.mass -= nextgas.body.mass;
             nextgas.revive();
         }
     }
