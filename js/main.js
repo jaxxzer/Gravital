@@ -173,7 +173,7 @@ window.onload = function() {
 //        player.body.x = game.input.mousePointer.x;
 //        player.body.y = game.input.mousePointer.y;
         
-        //debugGame(); // Display some text with information
+        debugGame(); // Display some text with information
         comet.emitter.x = comet.x;
         comet.emitter.y = comet.y;
         comet2.emitter.x = comet2.x;
@@ -195,20 +195,16 @@ window.onload = function() {
     function updateGasPlanets() {
         var distance = get_dist(player, jupiter);
         distance -= jupiter.height/2;
-        
-        
-        text.x = game.camera.x + text.width;
-        text.y = game.camera.y + game.camera.height - text.height;
-        
+
         if(distance > 400) {
             jupiter.timer.pause();
         } else{
             
             jupiter.timer.resume();
-       jupiter.timer.events[0].delay = distance;
+            jupiter.timer.events[0].delay = distance*3;
         }
         
-        
+       
     }
     
     function updateBounds(group) {
@@ -263,7 +259,9 @@ window.onload = function() {
             temp.kill();
             temp.body.collides(massCollisionGroup);
             temp.body.damping = 0;
-            temp.body.mass = 10;
+            temp.body.mass = 3;
+            temp.body.density = 5000;
+            //updateSize(temp);
             temp.body.massType = 'special';
             temp.body.planetX = planet.x;
             temp.body.planetY = planet.y;
@@ -277,11 +275,14 @@ window.onload = function() {
         var nextgas = GasPlanet.gas.getFirstDead();
         if(nextgas) {
             var angle = get_angle(GasPlanet, player);
-            text.setText(angle);
             angle += game.rnd.frac() * 0.3 *game.rnd.integerInRange(-1,1);
-            nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.height/2 - nextgas.height/2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height/2));
+            nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.height/2 - nextgas.height*2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height*2));
             //GasPlanet.body.mass -= nextgas.body.mass;
             nextgas.revive();
+            if(GasPlanet.body.mass > 50) {
+                GasPlanet.body.mass -= nextgas.body.mass;
+                updateSize(GasPlanet);
+            }
         }
     }
     
@@ -328,7 +329,10 @@ window.onload = function() {
     
     function absorb(body1, body2) {
         sound.play('blip');
-        body1.mass += body2.mass; // Player absorbs mass
+        if(player.body.mass < 10000) {
+            body1.mass += body2.mass; // Player absorbs mass
+ 
+        }
         updateSize(body1.sprite); // Player grows
         resetBody(body2); // Reset the mass that was absorbed
     }
