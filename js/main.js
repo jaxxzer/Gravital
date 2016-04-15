@@ -48,7 +48,9 @@ window.onload = function() {
     var sound;
 
     function create() {
-        var tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space'); // Background image
+        
+        // Background image
+        var tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space');
         
         // Create sound sprite for blip noise
     	sound = game.add.audio('blip');
@@ -88,6 +90,7 @@ window.onload = function() {
         player.body.mass = playerStartMass;
         player.body.density = playerDensity;
         updateSize(player); // Adjust size of the sprite
+        player.body.damping = 0;
         
         // Enable collisions between the player and children of asteroidCollisionGroup
         player.body.collides([asteroidCollisionGroup, gasCollisionGroup]);
@@ -113,7 +116,6 @@ window.onload = function() {
         comet.body.velocity.x = 5;
         comet.body.velocity.y = 5;
         
-        
         var comet2 = createComet(0,0);
         comet2.body.velocity.x = 500;
         comet2.body.velocity.y = 500;
@@ -131,6 +133,17 @@ window.onload = function() {
 
 
     function update() {
+        
+        updateAsteroids();
+        updateComets();
+        updateGasPlanets();
+        
+        updatePlayer();
+
+        debugGame(); // Display some text with information
+    }
+    
+    function updatePlayer() {
         //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
 
         // Add gravitational force between the player and the mouse, so that the player can be moved with the mouse
@@ -140,12 +153,6 @@ window.onload = function() {
         player.body.force.x += (G * Math.cos(angle) * player.body.mass * player.body.mass / r2);
         player.body.force.y += (G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
         constrain_acceleration(player);
-
-        debugGame(); // Display some text with information
-        
-        updateAsteroids();
-        updateComets();
-        updateGasPlanets();  
     }
     
     function updateAsteroids() {
