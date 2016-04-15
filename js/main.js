@@ -34,7 +34,11 @@ window.onload = function() {
     var masses; // Group of all masses in the game
     var massCollisionGroup; // CollisionGroup for the masses
     var mass;
+    
+    var gasPlanets; // Group of all gas planets
     var gasCollisionGroup;
+    
+    var comets; // Groupt of all comets
     
     var enemyDensity = 100.0; // Density of enemies
     var playerDensity = 100.0; // Density of the player
@@ -74,6 +78,8 @@ window.onload = function() {
         
         // All masses are a part of this group
         masses = game.add.group();
+        gasPlanets = game.add.group();
+        comets = game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
         player = game.add.sprite(game.world.centerX, game.world.centerY, 'asteroid' );
@@ -139,12 +145,12 @@ window.onload = function() {
         comet.body.velocity.y = 5;
         
         
-        masses.add(comet);
+        //masses.add(comet);
         
         comet2 = createComet(0,0);
         comet2.body.velocity.x = 500;
         comet2.body.velocity.y = 500;
-        masses.add(comet2);
+        //masses.add(comet2);
         
         jupiter = createGasPlanet(1100,400);
     }
@@ -169,14 +175,16 @@ window.onload = function() {
 
         
         debugGame(); // Display some text with information
-        comet.emitter.x = comet.x;
-        comet.emitter.y = comet.y;
-        comet2.emitter.x = comet2.x;
-        comet2.emitter.y = comet2.y;
-        comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
-        comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
-        comet2.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
-        comet2.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+        
+        updateComets();
+//        comet.emitter.x = comet.x;
+//        comet.emitter.y = comet.y;
+//        comet2.emitter.x = comet2.x;
+//        comet2.emitter.y = comet2.y;
+//        comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
+//        comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+//        comet2.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
+//        comet2.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
         
         
         updateBounds(masses);
@@ -186,6 +194,18 @@ window.onload = function() {
         
         
     }
+    
+    function updateComets() {
+        comets.forEachExists(function(comet) {
+            
+            comet.emitter.x = comet.x;
+            comet.emitter.y = comet.y;
+            comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
+            comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+        }); 
+    }
+    
+    
     
     function updateGasPlanets() {
         var distance = get_dist(player, jupiter);
@@ -235,16 +255,14 @@ window.onload = function() {
         planet.body.density = 50;
         masses.add(planet);
         
+        // Timer to control emission of gas
         planet.timer = game.time.create(true);
         planet.timer.loop(1000, emitGas, this, planet);
         planet.timer.start();
         
+        planet.gas = game.add.group(); // Group for the gas planet's emitted gas particles
         
-        
-        planet.gas = game.add.group();
-        
-        
-        
+        // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < 90; i++) {
             var temp = planet.gas.create(500, 500, 'ball');
             game.physics.p2.enable(temp);
@@ -256,16 +274,19 @@ window.onload = function() {
             temp.body.damping = 0;
             temp.body.mass = 3;
             temp.body.density = 5000;
-            //updateSize(temp);
+            //updateSize(temp); // ToDo: Tune gas mass and density so we can use this
             temp.body.massType = 'special';
             temp.body.planetX = planet.x;
             temp.body.planetY = planet.y;
         }
         
+        // Add the planet to the masses group
         masses.add(planet.gas);
-        updateSize(planet);
-        return planet;
         
+        // Scale planet according to size and density
+        updateSize(planet);
+        
+        return planet;  
     }
     
     function emitGas(GasPlanet) {
@@ -308,6 +329,10 @@ window.onload = function() {
         comet.emitter.gravity = 0;
         comet.emitter.start(false, 5000, 10);
         
+        comet.exists = true;
+        
+        comets.add(comet); // Add this comet to the comet group
+        
         return comet;
     }
     
@@ -327,6 +352,7 @@ window.onload = function() {
         text.y = game.camera.y + game.camera.height - text.height;
     }
     
+    // Body 1 absorbs mass of body 2, and body 2 is reset or killed
     function absorb(body1, body2) {
         sound.play('blip');
         if(player.body.mass < 10000) {
