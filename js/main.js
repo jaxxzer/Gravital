@@ -54,7 +54,7 @@ window.onload = function() {
     var gasTimer;
     
     function create() {
-        tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space');
+        tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space'); // Background image
         
         // Create sound sprite for blip noise
     	sound = game.add.audio('blip');
@@ -76,8 +76,8 @@ window.onload = function() {
         masses = game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
-        //player = masses.create(game.world.centerX, game.world.centerY, 'asteroid' );
         player = game.add.sprite(game.world.centerX, game.world.centerY, 'asteroid' );
+        
         // Camera will follow player around the playable area
         game.camera.follow(player);
         game.camera.deadzone = new Phaser.Rectangle(100, 100, 800, 400);
@@ -107,6 +107,8 @@ window.onload = function() {
         spin = player.animations.add('spin');
         player.animations.play('spin', 15, true);
         
+        
+        // Create asteroid masses
         for (var i = 0; i < numEnemies; i++) {
             mass = masses.create(game.rnd.integerInRange(0,game.world.width), game.rnd.integerInRange(0,game.world.height), 'asteroid');
             game.physics.p2.enable(mass);
@@ -124,6 +126,7 @@ window.onload = function() {
             mass.body.damping = 0;
         }
 
+        
         // Add some text using a CSS style.
         // Center it in X, and position its top 15 pixels from the top of the world.
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
@@ -144,15 +147,9 @@ window.onload = function() {
         masses.add(comet2);
         
         jupiter = createGasPlanet(1100,400);
-        
-        //gasTimer = game.time.events.loop(Phaser.Timer.SECOND, ressurect, this);
-        
     }
     
-    function ressurect() {
-        emitGas(jupiter);
-    }
-    
+    // kills gas object, returns it to it's owner
     function returnGas(body1, body2) {
         body2.sprite.reset(body2.planetX, body2.planetY);
         body2.sprite.kill();
@@ -169,9 +166,7 @@ window.onload = function() {
         player.body.force.x += (G * Math.cos(angle) * player.body.mass * player.body.mass / r2);
         player.body.force.y += (G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
         constrain_acceleration(player);
-        
-//        player.body.x = game.input.mousePointer.x;
-//        player.body.y = game.input.mousePointer.y;
+
         
         debugGame(); // Display some text with information
         comet.emitter.x = comet.x;
@@ -195,17 +190,16 @@ window.onload = function() {
     function updateGasPlanets() {
         var distance = get_dist(player, jupiter);
         distance -= jupiter.height/2;
-
+        
         if(distance > 400) {
             jupiter.timer.pause();
         } else{
             
             jupiter.timer.resume();
             jupiter.timer.events[0].delay = distance*3;
-        }
-        
-       
+        } 
     }
+    
     
     function updateBounds(group) {
         group.forEachAlive(function(item) {
@@ -230,6 +224,7 @@ window.onload = function() {
         }); 
     }
     
+    
     function createGasPlanet(x, y) {
         var planet = game.add.sprite(x,y, 'ball');
         planet.anchor.setTo(0.5);
@@ -241,7 +236,7 @@ window.onload = function() {
         masses.add(planet);
         
         planet.timer = game.time.create(true);
-        planet.timer.loop(1000, ressurect, this);
+        planet.timer.loop(1000, emitGas, this, planet);
         planet.timer.start();
         
         
@@ -266,9 +261,11 @@ window.onload = function() {
             temp.body.planetX = planet.x;
             temp.body.planetY = planet.y;
         }
+        
         masses.add(planet.gas);
         updateSize(planet);
         return planet;
+        
     }
     
     function emitGas(GasPlanet) {
@@ -286,6 +283,7 @@ window.onload = function() {
         }
     }
     
+    
     function createComet(x, y) {
         var comet = game.add.sprite(x, y, 'ball');
         comet.anchor.setTo(0.5);
@@ -295,11 +293,14 @@ window.onload = function() {
         comet.body.mass = 0.0001;
         comet.body.damping = 0;
         comet.emitter = game.add.emitter(comet.x, comet.y, 300);
-        comet.emitter.physicsBodyType = Phaser.Physics.P2;
+        comet.emitter.physicsBodyType = Phaser.Physics.P2; // Doesn't work for some reason, Phaser hasn't implemented yet
         comet.emitter.enableBody = true;
         comet.emitter.enableBodyDebug = true;
+        
+        //Constrain size of particles
         comet.emitter.minParticleScale = 0.01;
         comet.emitter.maxParticleScale = 0.01;
+        
         comet.emitter.makeParticles('ball');
         comet.emitter.setAll('body.mass', 0.00001);
         comet.emitter.setXSpeed(-100, 100);
