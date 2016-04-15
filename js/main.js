@@ -38,7 +38,9 @@ window.onload = function() {
     var gasPlanets; // Group of all gas planets
     var gasCollisionGroup;
     
-    var comets; // Groupt of all comets
+    var comets; // Group of all comets
+    
+    var asteroids; // Group of all asteroids
     
     var enemyDensity = 100.0; // Density of enemies
     var playerDensity = 100.0; // Density of the player
@@ -80,6 +82,7 @@ window.onload = function() {
         masses = game.add.group();
         gasPlanets = game.add.group();
         comets = game.add.group();
+        asteroids = game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
         player = game.add.sprite(game.world.centerX, game.world.centerY, 'asteroid' );
@@ -116,7 +119,7 @@ window.onload = function() {
         
         // Create asteroid masses
         for (var i = 0; i < numEnemies; i++) {
-            mass = masses.create(game.rnd.integerInRange(0,game.world.width), game.rnd.integerInRange(0,game.world.height), 'asteroid');
+            mass = asteroids.create(game.rnd.integerInRange(0,game.world.width), game.rnd.integerInRange(0,game.world.height), 'asteroid');
             game.physics.p2.enable(mass);
             mass.body.density = enemyDensity;
             newEnemy(mass);
@@ -128,7 +131,9 @@ window.onload = function() {
             mass.body.collideWorldBounds = false;
             
             mass.body.velocity.x = game.rnd.integerInRange(-250,250);
-            mass.body.velocity.y = game.rnd.integerInRange(-250,250);
+            mass.body.velocity.y = game.rnd.integerInRange(-250,250);            
+//            mass.body.velocity.x = 2500;
+//            mass.body.velocity.y = 2500;
             mass.body.damping = 0;
         }
 
@@ -161,7 +166,7 @@ window.onload = function() {
     function update() {
         //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
         
-        apply_forces(masses);
+        //apply_forces(masses);
         // Add gravitational force between the player and the mouse, so that the player can be moved with the mouse
         var angle = get_angle(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
         var r2 = get_r2(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
@@ -172,7 +177,7 @@ window.onload = function() {
 
         
         debugGame(); // Display some text with information
-        
+        updateAsteroids();
         updateComets();
 //        comet.emitter.x = comet.x;
 //        comet.emitter.y = comet.y;
@@ -184,7 +189,7 @@ window.onload = function() {
 //        comet2.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
         
         
-        updateBounds(masses);
+        //updateBounds(masses);
         updateGasPlanets();
          // Apply gravitational force calculation to every mass in the game
         //apply_forces(comet.emitter);
@@ -193,7 +198,10 @@ window.onload = function() {
     }
     
     function updateAsteroids() {
-        
+        asteroids.forEachExists(function(asteroid) {
+            applyForce(asteroid);
+            updatePos(asteroid);
+        });
     }
     
     function updateComets() {
