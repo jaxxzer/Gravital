@@ -165,8 +165,7 @@ window.onload = function() {
 
     function update() {
         //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
-        
-        //apply_forces(masses);
+
         // Add gravitational force between the player and the mouse, so that the player can be moved with the mouse
         var angle = get_angle(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
         var r2 = get_r2(player.body, {"x":game.input.mousePointer.x+game.camera.x, "y":game.input.mousePointer.y+game.camera.y});
@@ -175,61 +174,59 @@ window.onload = function() {
         player.body.force.y += (G * Math.sin(angle) * player.body.mass * player.body.mass / r2);
         constrain_acceleration(player);
 
-        
         debugGame(); // Display some text with information
+        
         updateAsteroids();
         updateComets();
-//        comet.emitter.x = comet.x;
-//        comet.emitter.y = comet.y;
-//        comet2.emitter.x = comet2.x;
-//        comet2.emitter.y = comet2.y;
-//        comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
-//        comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
-//        comet2.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
-//        comet2.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
-        
-        
-        //updateBounds(masses);
-        updateGasPlanets();
-         // Apply gravitational force calculation to every mass in the game
-        //apply_forces(comet.emitter);
-        
-        
+        updateGasPlanets();  
     }
     
     function updateAsteroids() {
         asteroids.forEachExists(function(asteroid) {
-            applyForce(asteroid);
-            updatePos(asteroid);
+            applyForce(asteroid); // Gravity
+            updatePos(asteroid); // Wrap around game boundaries
         });
     }
     
     function updateComets() {
         comets.forEachExists(function(comet) {
             
+            // Update emitter position to match parent sprite
             comet.emitter.x = comet.x;
             comet.emitter.y = comet.y;
-            comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
-            comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
             
-            applyForce(comet);
-            updatePos(comet);
+            // Update emitter spread according to velocity of parent sprite
+            comet.emitter.setXSpeed(-comet.body.velocity.x * cometSpread, comet.body.velocity.x * cometSpread);
+            comet.emitter.setYSpeed(-comet.body.velocity.y * cometSpread, comet.body.velocity.y * cometSpread);
+            
+            applyForce(comet); // Gravity
+            updatePos(comet); // Wrap around game boundaries
         }); 
     }
     
-    
-    
     function updateGasPlanets() {
-        var distance = get_dist(player, jupiter);
-        distance -= jupiter.height/2;
-        
-        if(distance > 400) {
-            jupiter.timer.pause();
-        } else{
+        gasPlanets.forEachExists(function(gasPlanet) {
             
-            jupiter.timer.resume();
-            jupiter.timer.events[0].delay = distance*3;
-        } 
+            // Update emission rate of gas particles according to proximity to player
+            var distance = get_dist(player, gasPlanet);
+            distance -= gasPlanet.height/2;
+
+            if(distance > 400) {
+                gasPlanet.timer.pause();
+            } else{
+
+                gasPlanet.timer.resume();
+                gasPlanet.timer.events[0].delay = distance*3;
+            }
+            
+            gasPlanet.gas.forEachExists(function(gas) {
+                applyForce(gas);
+                updatePos(gas);
+            });
+            
+            applyForce(gasPlanet); // Gravity
+            updatePos(gasPlanet); // Wrap around game boundaries
+        });
     }
     
     function updatePos(sprite) {
@@ -279,7 +276,7 @@ window.onload = function() {
         game.physics.p2.enable(planet);
         planet.body.mass = 500;
         planet.body.density = 50;
-        masses.add(planet);
+        //masses.add(planet);
         
         // Timer to control emission of gas
         planet.timer = game.time.create(true);
@@ -307,11 +304,12 @@ window.onload = function() {
         }
         
         // Add the planet to the masses group
-        masses.add(planet.gas);
+        //masses.add(planet.gas);
         
         // Scale planet according to size and density
         updateSize(planet);
         
+        gasPlanets.add(planet);
         return planet;  
     }
     
