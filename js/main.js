@@ -145,12 +145,9 @@ window.onload = function() {
         comet.body.velocity.y = 5;
         
         
-        //masses.add(comet);
-        
         comet2 = createComet(0,0);
         comet2.body.velocity.x = 500;
         comet2.body.velocity.y = 500;
-        //masses.add(comet2);
         
         jupiter = createGasPlanet(1100,400);
     }
@@ -195,6 +192,10 @@ window.onload = function() {
         
     }
     
+    function updateAsteroids() {
+        
+    }
+    
     function updateComets() {
         comets.forEachExists(function(comet) {
             
@@ -202,6 +203,9 @@ window.onload = function() {
             comet.emitter.y = comet.y;
             comet.emitter.setXSpeed(-comet.body.velocity.x *cometSpread, comet.body.velocity.x *cometSpread);
             comet.emitter.setYSpeed(-comet.body.velocity.y*cometSpread, comet.body.velocity.y *cometSpread);
+            
+            applyForce(comet);
+            updatePos(comet);
         }); 
     }
     
@@ -217,6 +221,20 @@ window.onload = function() {
             
             jupiter.timer.resume();
             jupiter.timer.events[0].delay = distance*3;
+        } 
+    }
+    
+    function updatePos(sprite) {
+        if(sprite.body.x < 0 - worldBuffer) {
+            sprite.body.x = game.world.width + worldBuffer;
+        } else if(sprite.body.x > game.world.width + worldBuffer) {
+            sprite.body.x = 0 - worldBuffer;
+        }
+
+        if(sprite.body.y < 0 - worldBuffer) {
+            sprite.body.y = game.world.height + worldBuffer;
+        } else if(sprite.body.y > game.world.height + worldBuffer) {
+            sprite.body.y = 0 - worldBuffer;
         } 
     }
     
@@ -423,6 +441,22 @@ window.onload = function() {
     function get_dist(object1, object2) {
         return Math.sqrt(get_r2(object1, object2));
     }
+    
+    
+    function applyForce(item) {
+        if(item.length > 0) {
+            apply_forces(item);
+        } else {
+
+        var angle = get_angle(item, player);
+        var r2 = get_r2(item, player);
+
+        item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
+        item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
+        constrain_acceleration(item);
+        }
+    }
+    
     
     // Calculates the center of mass for the entire set of masses in a group, then applies a gravitational force to each mass in the group towards the center of mass
     function apply_forces(group) {
