@@ -47,15 +47,14 @@ window.onload = function() {
     
     var playerStartMass = 100.0; // The initial mass of the player
     
-    var numEnemies = 50; // Number of masses other than the player that will be created
+    var numAsteroids = 50; // Number of masses other than the player that will be created
     
     var asteroid;
     var spin;
     var sound;
-    var comet;
-    var comet2;
+
     var cometSpread = 0.1;
-    var jupiter;
+
     
     var gasTimer;
     
@@ -117,51 +116,32 @@ window.onload = function() {
         player.animations.play('spin', 15, true);
         
         
-        // Create asteroid masses
-        for (var i = 0; i < numEnemies; i++) {
-            mass = asteroids.create(game.rnd.integerInRange(0,game.world.width), game.rnd.integerInRange(0,game.world.height), 'asteroid');
-            game.physics.p2.enable(mass);
-            mass.body.density = enemyDensity;
-            newEnemy(mass);
-            
-            spin = mass.animations.add('spin');
-            mass.animations.play('spin', game.rnd.integerInRange(5,25), true);
-
-            mass.body.collides(massCollisionGroup);
-            mass.body.collideWorldBounds = false;
-            
-            mass.body.velocity.x = game.rnd.integerInRange(-250,250);
-            mass.body.velocity.y = game.rnd.integerInRange(-250,250);            
-//            mass.body.velocity.x = 2500;
-//            mass.body.velocity.y = 2500;
-            mass.body.damping = 0;
+        // Create asteroids
+        for (var i = 0; i < numAsteroids; i++) {
+            createAsteroid(game.rnd.integerInRange(0,game.world.width), game.rnd.integerInRange(0,game.world.height));
         }
-
+        
+        // Create comets
+        var comet = createComet(500,500);
+        comet.body.velocity.x = 5;
+        comet.body.velocity.y = 5;
+        
+        
+        var comet2 = createComet(0,0);
+        comet2.body.velocity.x = 500;
+        comet2.body.velocity.y = 500;
+        
+        // Create gas giants
+        createGasPlanet(1100,400);
         
         // Add some text using a CSS style.
         // Center it in X, and position its top 15 pixels from the top of the world.
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
         text = game.add.text( game.world.centerX, 15, "Build something awesome.", style );
         text.anchor.setTo(0.5, 0.0);
-        
-        
-        comet = createComet(500,500);
-        comet.body.velocity.x = 5;
-        comet.body.velocity.y = 5;
-        
-        
-        comet2 = createComet(0,0);
-        comet2.body.velocity.x = 500;
-        comet2.body.velocity.y = 500;
-        
-        jupiter = createGasPlanet(1100,400);
     }
     
-    // kills gas object, returns it to it's owner
-    function returnGas(body1, body2) {
-        body2.sprite.reset(body2.planetX, body2.planetY);
-        body2.sprite.kill();
-    }
+
 
     function update() {
         //player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
@@ -184,7 +164,7 @@ window.onload = function() {
     function updateAsteroids() {
         asteroids.forEachExists(function(asteroid) {
             applyForce(asteroid); // Gravity
-            updatePos(asteroid); // Wrap around game boundaries
+            checkBounds(asteroid); // Wrap around game boundaries
         });
     }
     
@@ -200,7 +180,7 @@ window.onload = function() {
             comet.emitter.setYSpeed(-comet.body.velocity.y * cometSpread, comet.body.velocity.y * cometSpread);
             
             applyForce(comet); // Gravity
-            updatePos(comet); // Wrap around game boundaries
+            checkBounds(comet); // Wrap around game boundaries
         }); 
     }
     
@@ -221,52 +201,64 @@ window.onload = function() {
             
             gasPlanet.gas.forEachExists(function(gas) {
                 applyForce(gas);
-                updatePos(gas);
+                checkBounds(gas);
             });
             
             applyForce(gasPlanet); // Gravity
-            updatePos(gasPlanet); // Wrap around game boundaries
+            checkBounds(gasPlanet); // Wrap around game boundaries
         });
     }
     
-    function updatePos(sprite) {
-        if(sprite.body.x < 0 - worldBuffer) {
-            sprite.body.x = game.world.width + worldBuffer;
-        } else if(sprite.body.x > game.world.width + worldBuffer) {
-            sprite.body.x = 0 - worldBuffer;
-        }
+    function createAsteroid(x, y) {
+            asteroid = asteroids.create(x, y, 'asteroid');
+            game.physics.p2.enable(asteroid);
+            asteroid.body.density = enemyDensity;
+            newEnemy(asteroid);
+            
+            spin = asteroid.animations.add('spin');
+            asteroid.animations.play('spin', game.rnd.integerInRange(5,25), true);
 
-        if(sprite.body.y < 0 - worldBuffer) {
-            sprite.body.y = game.world.height + worldBuffer;
-        } else if(sprite.body.y > game.world.height + worldBuffer) {
-            sprite.body.y = 0 - worldBuffer;
-        } 
+            asteroid.body.collides(massCollisionGroup);
+            asteroid.body.collideWorldBounds = false;
+            
+            asteroid.body.velocity.x = game.rnd.integerInRange(-250,250);
+            asteroid.body.velocity.y = game.rnd.integerInRange(-250,250);            
+
+            asteroid.body.damping = 0;
+        
+            asteroids.add(asteroid);
     }
     
-    
-    function updateBounds(group) {
-        group.forEachAlive(function(item) {
-            
-            if(item.length > 0) {
-                
-                updateBounds(item);
-            } else {
-            
-                if(item.body.x < 0 - worldBuffer) {
-                    item.body.x = game.world.width + worldBuffer;
-                } else if(item.body.x > game.world.width + worldBuffer) {
-                    item.body.x = 0 - worldBuffer;
-                }
-
-                if(item.body.y < 0 - worldBuffer) {
-                    item.body.y = game.world.height + worldBuffer;
-                } else if(item.body.y > game.world.height + worldBuffer) {
-                    item.body.y = 0 - worldBuffer;
-                }
-            }
-        }); 
+    function createComet(x, y) {
+        var comet = game.add.sprite(x, y, 'ball');
+        comet.anchor.setTo(0.5);
+        comet.scale.setTo(0.03);
+        
+        game.physics.p2.enable(comet);
+        comet.body.mass = 0.0001;
+        comet.body.damping = 0;
+        comet.emitter = game.add.emitter(comet.x, comet.y, 300);
+        comet.emitter.physicsBodyType = Phaser.Physics.P2; // Doesn't work for some reason, Phaser hasn't implemented yet
+        comet.emitter.enableBody = true;
+        comet.emitter.enableBodyDebug = true;
+        
+        //Constrain size of particles
+        comet.emitter.minParticleScale = 0.01;
+        comet.emitter.maxParticleScale = 0.01;
+        
+        comet.emitter.makeParticles('ball');
+        comet.emitter.setAll('body.mass', 0.00001);
+        comet.emitter.setXSpeed(-100, 100);
+        comet.emitter.setYSpeed(-100, 100);
+        comet.emitter.gravity = 0;
+        comet.emitter.start(false, 5000, 10);
+        
+        comet.exists = true;
+        
+        comets.add(comet); // Add this comet to the comet group
+        
+        return comet;
     }
-    
     
     function createGasPlanet(x, y) {
         var planet = game.add.sprite(x,y, 'ball');
@@ -303,13 +295,12 @@ window.onload = function() {
             temp.body.planetY = planet.y;
         }
         
-        // Add the planet to the masses group
-        //masses.add(planet.gas);
-        
         // Scale planet according to size and density
         updateSize(planet);
         
+        // Add planet to the gasPlanets group
         gasPlanets.add(planet);
+        
         return planet;  
     }
     
@@ -328,40 +319,14 @@ window.onload = function() {
         }
     }
     
-    
-    function createComet(x, y) {
-        var comet = game.add.sprite(x, y, 'ball');
-        comet.anchor.setTo(0.5);
-        comet.scale.setTo(0.03);
-        
-        game.physics.p2.enable(comet);
-        comet.body.mass = 0.0001;
-        comet.body.damping = 0;
-        comet.emitter = game.add.emitter(comet.x, comet.y, 300);
-        comet.emitter.physicsBodyType = Phaser.Physics.P2; // Doesn't work for some reason, Phaser hasn't implemented yet
-        comet.emitter.enableBody = true;
-        comet.emitter.enableBodyDebug = true;
-        
-        //Constrain size of particles
-        comet.emitter.minParticleScale = 0.01;
-        comet.emitter.maxParticleScale = 0.01;
-        
-        comet.emitter.makeParticles('ball');
-        comet.emitter.setAll('body.mass', 0.00001);
-        comet.emitter.setXSpeed(-100, 100);
-        comet.emitter.setYSpeed(-100, 100);
-        comet.emitter.gravity = 0;
-        comet.emitter.start(false, 5000, 10);
-        
-        comet.exists = true;
-        
-        comets.add(comet); // Add this comet to the comet group
-        
-        return comet;
-    }
-    
+        // kills gas object, returns it to it's owner
+    function returnGas(body1, body2) {
+        body2.sprite.reset(body2.planetX, body2.planetY);
+        body2.sprite.kill();
+    } 
+  
     function render() {
-        game.debug.body(comet.emitter);
+//        game.debug.body(comet.emitter);
 //        game.debug.cameraInfo(game.camera, 32, 32);
     }
     
@@ -387,10 +352,26 @@ window.onload = function() {
         resetBody(body2); // Reset the mass that was absorbed
     }
     
+    // Scale a sprite according to it's mass and density
     function updateSize(sprite) {
         sprite.scale.setTo(Math.cbrt(sprite.body.mass/sprite.body.density)); // Update size based on mass and density
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
         sprite.body.setCollisionGroup(massCollisionGroup); // CollisionGroup must be updated when a new body is created
+    }
+    
+    // Check if a sprite has left the game area, and wrap it's position to the other side of the game area
+    function checkBounds(sprite) {
+        if(sprite.body.x < 0 - worldBuffer) {
+            sprite.body.x = game.world.width + worldBuffer;
+        } else if(sprite.body.x > game.world.width + worldBuffer) {
+            sprite.body.x = 0 - worldBuffer;
+        }
+
+        if(sprite.body.y < 0 - worldBuffer) {
+            sprite.body.y = game.world.height + worldBuffer;
+        } else if(sprite.body.y > game.world.height + worldBuffer) {
+            sprite.body.y = 0 - worldBuffer;
+        } 
     }
     
     // Recycle an enemy mass by moving it offscreen and giving it a new mass
@@ -430,7 +411,7 @@ window.onload = function() {
     // Enemy types might be asteroids, planets, moons, stars, comets, dust, or black holes
     // The likleyhood of each type of enemy spawning could be set to tune gameplay experience
     function newEnemy(sprite) {
-        sprite.body.mass = 5 * game.rnd.frac() * player.body.mass/numEnemies;
+        sprite.body.mass = 5 * game.rnd.frac() * player.body.mass/numAsteroids;
         updateSize(sprite);
     }
     
@@ -461,63 +442,6 @@ window.onload = function() {
         item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
         constrain_acceleration(item);
         }
-    }
-    
-    
-    // Calculates the center of mass for the entire set of masses in a group, then applies a gravitational force to each mass in the group towards the center of mass
-    function apply_forces(group) {
-//        var mass_product_sum = get_product_sum(group);  
-//        var mass_sum = get_mass_sum(group);
-//
-//        // F = G * m1m2/r^2
-//        group.forEachAlive(function(item) {
-//            
-//            // Calculate center of mass, excluding the current mass
-//            var com_x = (mass_product_sum.x - (item.body.mass * item.x)) / (mass_sum - item.body.mass);
-//            var com_y = (mass_product_sum.y - (item.body.mass * item.y)) / (mass_sum - item.body.mass);
-//            
-//            var angle = get_angle(item, {"x":com_x, "y":com_y}); // Angle between current mass and center of mass
-//            var r2 = get_r2(item, {"x":com_x, "y":com_y}); // Angle between current mass and the center of mass
-//            
-//            item.body.force.x = (G * Math.cos(angle) * mass_product_sum.x / r2);
-//            item.body.force.y = (G * Math.sin(angle) * mass_product_sum.y / r2);
-//            
-//            constrain_acceleration(item); // Limit acceleration
-//        }); 
-        
-        group.forEachAlive(function(item) {
-            if(item.length > 0) {
-                apply_forces(item);
-            } else {
-                
-            var angle = get_angle(item, player);
-            var r2 = get_r2(item, player);
-            
-            item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
-            item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
-            constrain_acceleration(item);
-            }
-        });
-    }
-
-    
-    function get_mass_sum(group) {
-        var sum = 0.0;
-        group.forEachAlive(function(item) {
-            sum += item.body.mass;
-        });
-        return sum;
-    } 
-    
-    function get_product_sum(group) {
-        var sum_x = 0.0;
-        var sum_y = 0.0;
-        group.forEachAlive(function(item) {
-            sum_x += item.body.mass * item.x;
-            sum_y += item.body.mass * item.y;
-        });
-        
-        return {"x" : sum_x, "y" : sum_y};
     }
     
     // This will constrain the acceleration on an object to a maximum magnitude
@@ -557,3 +481,86 @@ window.onload = function() {
         }
     }
 };
+
+
+
+//    function updateBounds(group) {
+//        group.forEachAlive(function(item) {
+//            
+//            if(item.length > 0) {
+//                
+//                updateBounds(item);
+//            } else {
+//            
+//                if(item.body.x < 0 - worldBuffer) {
+//                    item.body.x = game.world.width + worldBuffer;
+//                } else if(item.body.x > game.world.width + worldBuffer) {
+//                    item.body.x = 0 - worldBuffer;
+//                }
+//
+//                if(item.body.y < 0 - worldBuffer) {
+//                    item.body.y = game.world.height + worldBuffer;
+//                } else if(item.body.y > game.world.height + worldBuffer) {
+//                    item.body.y = 0 - worldBuffer;
+//                }
+//            }
+//        }); 
+//    }
+
+
+
+//    // Calculates the center of mass for the entire set of masses in a group, then applies a gravitational force to each mass in the group towards the center of mass
+//    function apply_forces(group) {
+////        var mass_product_sum = get_product_sum(group);  
+////        var mass_sum = get_mass_sum(group);
+////
+////        // F = G * m1m2/r^2
+////        group.forEachAlive(function(item) {
+////            
+////            // Calculate center of mass, excluding the current mass
+////            var com_x = (mass_product_sum.x - (item.body.mass * item.x)) / (mass_sum - item.body.mass);
+////            var com_y = (mass_product_sum.y - (item.body.mass * item.y)) / (mass_sum - item.body.mass);
+////            
+////            var angle = get_angle(item, {"x":com_x, "y":com_y}); // Angle between current mass and center of mass
+////            var r2 = get_r2(item, {"x":com_x, "y":com_y}); // Angle between current mass and the center of mass
+////            
+////            item.body.force.x = (G * Math.cos(angle) * mass_product_sum.x / r2);
+////            item.body.force.y = (G * Math.sin(angle) * mass_product_sum.y / r2);
+////            
+////            constrain_acceleration(item); // Limit acceleration
+////        }); 
+//        
+//        group.forEachAlive(function(item) {
+//            if(item.length > 0) {
+//                apply_forces(item);
+//            } else {
+//                
+//            var angle = get_angle(item, player);
+//            var r2 = get_r2(item, player);
+//            
+//            item.body.force.x = (G * Math.cos(angle) * item.body.mass * player.body.mass) / r2;
+//            item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
+//            constrain_acceleration(item);
+//            }
+//        });
+//    }
+
+
+//    function get_mass_sum(group) {
+//        var sum = 0.0;
+//        group.forEachAlive(function(item) {
+//            sum += item.body.mass;
+//        });
+//        return sum;
+//    } 
+//    
+//    function get_product_sum(group) {
+//        var sum_x = 0.0;
+//        var sum_y = 0.0;
+//        group.forEachAlive(function(item) {
+//            sum_x += item.body.mass * item.x;
+//            sum_y += item.body.mass * item.y;
+//        });
+//        
+//        return {"x" : sum_x, "y" : sum_y};
+//    }
