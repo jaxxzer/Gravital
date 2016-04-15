@@ -21,45 +21,34 @@ window.onload = function() {
         game.load.image('ball', 'assets/blueball.png');
         game.load.image('space', 'assets/SPACE.jpg');
     }
-    var tilesprite;
-    var player;
-    var text;
     
-    var worldBuffer = 150;
+    var player;
+    var text; // Debug text
+    
+    var worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
     
     //var G = 0.50;
     var G = 5000; // Gravitational constant
     var accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
     
-    var masses; // Group of all masses in the game
-    var massCollisionGroup; // CollisionGroup for the masses
-    var mass;
+    var numAsteroids = 50; // Number of masses other than the player that will be created
+    var asteroids; // Group of all asteroids
+    var asteroidCollisionGroup; // CollisionGroup for the masses
+
+    var comets; // Group of all comets
     
     var gasPlanets; // Group of all gas planets
     var gasCollisionGroup;
-    
-    var comets; // Group of all comets
-    
-    var asteroids; // Group of all asteroids
     
     var enemyDensity = 100.0; // Density of enemies
     var playerDensity = 100.0; // Density of the player
     
     var playerStartMass = 100.0; // The initial mass of the player
     
-    var numAsteroids = 50; // Number of masses other than the player that will be created
-    
-    var asteroid;
-    var spin;
     var sound;
 
-    var cometSpread = 0.1;
-
-    
-    var gasTimer;
-    
     function create() {
-        tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space'); // Background image
+        var tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space'); // Background image
         
         // Create sound sprite for blip noise
     	sound = game.add.audio('blip');
@@ -72,13 +61,11 @@ window.onload = function() {
         game.physics.startSystem(Phaser.Physics.P2JS);
         
         //Create new CollisionGroup for the masses
-    	massCollisionGroup = game.physics.p2.createCollisionGroup();
+    	asteroidCollisionGroup = game.physics.p2.createCollisionGroup();
         gasCollisionGroup = game.physics.p2.createCollisionGroup();
         game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
         game.physics.p2.setImpactEvents(true);
         
-        // All masses are a part of this group
-        masses = game.add.group();
         gasPlanets = game.add.group();
         comets = game.add.group();
         asteroids = game.add.group();
@@ -102,17 +89,17 @@ window.onload = function() {
         player.body.density = playerDensity;
         updateSize(player); // Adjust size of the sprite
         
-        // Enable collisions between the player and children of massCollisionGroup
-        player.body.collides([massCollisionGroup, gasCollisionGroup]);
+        // Enable collisions between the player and children of asteroidCollisionGroup
+        player.body.collides([asteroidCollisionGroup, gasCollisionGroup]);
         
         // Set the callback method when player collides with another mass
-        player.body.createGroupCallback(massCollisionGroup, absorb, this);
-        player.body.createGroupCallback(gasCollisionGroup, returnGas, this);
+        player.body.createGroupCallback(asteroidCollisionGroup, absorbAsteroid, this);
+        player.body.createGroupCallback(gasCollisionGroup, absorbGas, this);
         
 //        player.body.debug = true; // Will show the P2 physics body
         
         // Animate the player sprite
-        spin = player.animations.add('spin');
+        var spin = player.animations.add('spin');
         player.animations.play('spin', 15, true);
         
         
@@ -169,6 +156,9 @@ window.onload = function() {
     }
     
     function updateComets() {
+        
+        var cometSpread = 0.1;
+        
         comets.forEachExists(function(comet) {
             
             // Update emitter position to match parent sprite
@@ -210,15 +200,15 @@ window.onload = function() {
     }
     
     function createAsteroid(x, y) {
-            asteroid = asteroids.create(x, y, 'asteroid');
+            var asteroid = asteroids.create(x, y, 'asteroid');
             game.physics.p2.enable(asteroid);
             asteroid.body.density = enemyDensity;
             newEnemy(asteroid);
             
-            spin = asteroid.animations.add('spin');
+            var spin = asteroid.animations.add('spin');
             asteroid.animations.play('spin', game.rnd.integerInRange(5,25), true);
 
-            asteroid.body.collides(massCollisionGroup);
+            asteroid.body.collides(asteroidCollisionGroup);
             asteroid.body.collideWorldBounds = false;
             
             asteroid.body.velocity.x = game.rnd.integerInRange(-250,250);
@@ -268,7 +258,6 @@ window.onload = function() {
         game.physics.p2.enable(planet);
         planet.body.mass = 500;
         planet.body.density = 50;
-        //masses.add(planet);
         
         // Timer to control emission of gas
         planet.timer = game.time.create(true);
@@ -285,7 +274,7 @@ window.onload = function() {
             temp.body.setCollisionGroup(gasCollisionGroup);
             temp.scale.setTo(0.05);
             temp.kill();
-            temp.body.collides(massCollisionGroup);
+            temp.body.collides(asteroidCollisionGroup);
             temp.body.damping = 0;
             temp.body.mass = 3;
             temp.body.density = 5000;
@@ -320,29 +309,13 @@ window.onload = function() {
         }
     }
     
-        // kills gas object, returns it to it's owner
-    function returnGas(body1, body2) {
+    // kills gas object, returns it to it's owner
+    function absorbGas(body1, body2) {
         body2.sprite.kill();
     } 
   
-    function render() {
-//        game.debug.body(comet.emitter);
-//        game.debug.cameraInfo(game.camera, 32, 32);
-    }
-    
-    function debugGame () {
-        text.setText("\
-                        player.mass: " 
-                    + player.body.mass.toFixed(4)
-                    + "\nplayer.radius: "
-                    + player.height/2
-                    + "\nx: " + player.x + " y: " + player.y);
-        text.x = game.camera.x + text.width;
-        text.y = game.camera.y + game.camera.height - text.height;
-    }
-    
     // Body 1 absorbs mass of body 2, and body 2 is reset or killed
-    function absorb(body1, body2) {
+    function absorbAsteroid(body1, body2) {
         sound.play('blip');
         if(player.body.mass < 10000) {
             body1.mass += body2.mass; // Player absorbs mass
@@ -356,7 +329,7 @@ window.onload = function() {
     function updateSize(sprite) {
         sprite.scale.setTo(Math.cbrt(sprite.body.mass/sprite.body.density)); // Update size based on mass and density
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
-        sprite.body.setCollisionGroup(massCollisionGroup); // CollisionGroup must be updated when a new body is created
+        sprite.body.setCollisionGroup(asteroidCollisionGroup); // CollisionGroup must be updated when a new body is created
     }
     
     // Check if a sprite has left the game area, and wrap it's position to the other side of the game area
@@ -401,7 +374,6 @@ window.onload = function() {
 
         body.reset(newX, newY); // Put the sprite there
         newEnemy(body.sprite); // Give the sprite a new mass / size
-        
     }
     
     // This will spawn new enemies according to the context of the game
@@ -411,21 +383,6 @@ window.onload = function() {
         sprite.body.mass = 5 * game.rnd.frac() * player.body.mass/numAsteroids;
         updateSize(sprite);
     }
-    
-    // Returns the angle between two objects
-    function get_angle(object1, object2) {
-        return Math.atan2(object2.y - object1.y, object2.x - object1.x);
-    }
-    
-    // Returns the distance squared between two objects
-    function get_r2(object1, object2) {
-        return ((object2.x - object1.x) * (object2.x - object1.x)) + ((object2.y - object1.y) *  (object2.y - object1.y));
-    }
-    
-    function get_dist(object1, object2) {
-        return Math.sqrt(get_r2(object1, object2));
-    }
-    
     
     function applyForce(item) {
         if(item.length > 0) {
@@ -439,6 +396,36 @@ window.onload = function() {
         item.body.force.y = (G * Math.sin(angle) * item.body.mass * player.body.mass) / r2;
         constrain_acceleration(item);
         }
+    }
+    
+    function render() {
+//        game.debug.body(comet.emitter);
+//        game.debug.cameraInfo(game.camera, 32, 32);
+    }
+    
+    function debugGame () {
+        text.setText("\
+                        player.mass: " 
+                    + player.body.mass.toFixed(4)
+                    + "\nplayer.radius: "
+                    + player.height/2
+                    + "\nx: " + player.x + " y: " + player.y);
+        text.x = game.camera.x + text.width;
+        text.y = game.camera.y + game.camera.height - text.height;
+    }
+        
+    // Returns the angle between two objects
+    function get_angle(object1, object2) {
+        return Math.atan2(object2.y - object1.y, object2.x - object1.x);
+    }
+    
+    // Returns the distance squared between two objects
+    function get_r2(object1, object2) {
+        return ((object2.x - object1.x) * (object2.x - object1.x)) + ((object2.y - object1.y) *  (object2.y - object1.y));
+    }
+    
+    function get_dist(object1, object2) {
+        return Math.sqrt(get_r2(object1, object2));
     }
     
     // This will constrain the acceleration on an object to a maximum magnitude
