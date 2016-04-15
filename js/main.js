@@ -290,7 +290,7 @@ window.onload = function() {
             temp.body.mass = 3;
             temp.body.density = 5000;
             //updateSize(temp); // ToDo: Tune gas mass and density so we can use this
-            temp.body.massType = 'special';
+            //temp.body.massType = 'special';
             temp.body.planetX = planet.x;
             temp.body.planetY = planet.y;
         }
@@ -304,6 +304,7 @@ window.onload = function() {
         return planet;  
     }
     
+    // Emit a gas particle from the edge of a gas giant in the direction of the player
     function emitGas(GasPlanet) {
         var nextgas = GasPlanet.gas.getFirstDead();
         if(nextgas) {
@@ -321,7 +322,6 @@ window.onload = function() {
     
         // kills gas object, returns it to it's owner
     function returnGas(body1, body2) {
-        body2.sprite.reset(body2.planetX, body2.planetY);
         body2.sprite.kill();
     } 
   
@@ -376,35 +376,32 @@ window.onload = function() {
     
     // Recycle an enemy mass by moving it offscreen and giving it a new mass
     function resetBody(body) {
-        if(body.massType == 'special') {
-            body.sprite.kill();
-           
-        } else {
-            var side = game.rnd.integerInRange(1,4);
-            var newX, newY;
-            switch(side) { // Chose an edge of the world to locate the sprite (offscreen)
-                case 1: // Top
-                    newX = game.rnd.integerInRange(-100, game.world.width+100);
-                    newY = game.rnd.integerInRange(-150,-50);
-                    break;
-                case 2: // Bottom
-                    newX = game.rnd.integerInRange(-100, game.world.width+100);
-                    newY = game.rnd.integerInRange(game.world.height + 50, game.world.height + 150);
-                    break;
-                case 3: // Left
-                    newX = game.rnd.integerInRange(-150,-50);
-                    newY = game.rnd.integerInRange(-100, game.world.height + 100);
-                    break;
-                case 4: // Right
-                default:
-                    newX = game.rnd.integerInRange(game.world.width + 50, game.world.width + 150);
-                    newY = game.rnd.integerInRange(-100, game.world.height + 100);
 
-            }
+        var side = game.rnd.integerInRange(1,4);
+        var newX, newY;
+        switch(side) { // Chose an edge of the world to locate the sprite (offscreen)
+            case 1: // Top
+                newX = game.rnd.integerInRange(-100, game.world.width+100);
+                newY = game.rnd.integerInRange(-150,-50);
+                break;
+            case 2: // Bottom
+                newX = game.rnd.integerInRange(-100, game.world.width+100);
+                newY = game.rnd.integerInRange(game.world.height + 50, game.world.height + 150);
+                break;
+            case 3: // Left
+                newX = game.rnd.integerInRange(-150,-50);
+                newY = game.rnd.integerInRange(-100, game.world.height + 100);
+                break;
+            case 4: // Right
+            default:
+                newX = game.rnd.integerInRange(game.world.width + 50, game.world.width + 150);
+                newY = game.rnd.integerInRange(-100, game.world.height + 100);
 
-            body.reset(newX, newY); // Put the sprite there
-            newEnemy(body.sprite); // Give the sprite a new mass / size
         }
+
+        body.reset(newX, newY); // Put the sprite there
+        newEnemy(body.sprite); // Give the sprite a new mass / size
+        
     }
     
     // This will spawn new enemies according to the context of the game
