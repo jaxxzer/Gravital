@@ -266,6 +266,7 @@ window.onload = function() {
         planet.body.mass = 500;
         planet.body.density = 50;
         
+        
         // Timer to control emission of gas
         planet.timer = game.time.create(true);
         planet.timer.loop(1000, emitGas, this, planet);
@@ -282,6 +283,7 @@ window.onload = function() {
             temp.scale.setTo(0.05);
             temp.kill();
             temp.body.collides(asteroidCollisionGroup);
+            temp.body.collideWorldBounds = false;
             temp.body.damping = 0;
             temp.body.mass = 3;
             temp.body.density = 5000;
