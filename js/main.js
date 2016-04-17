@@ -16,11 +16,11 @@ window.onload = function() {
     var game = new Phaser.Game( 1000, 600, Phaser.CANVAS, 'game', { preload: preload, create: create, update: update, render: render} );
     
     function preload() {
-        game.load.audio('blip', 'assets/Blip.ogg');
-        game.load.spritesheet('asteroid', 'assets/asteroid_sprite_sheet.png', 128, 128, 32);
-        game.load.spritesheet('gasParticle', 'assets/GasParticleSpriteSheet.png', 256, 255.8, 30);
-        game.load.image('ball', 'assets/planet2.png');
-        game.load.image('space', 'assets/SPACE.jpg');
+        game.load.audio('blip', 'assets/audio/Blip.ogg');
+        game.load.spritesheet('asteroid', 'assets/img/asteroid_sprite_sheet.png', 128, 128, 32);
+        game.load.spritesheet('gasParticle', 'assets/img/GasParticleSpriteSheet.png', 256, 255.8, 30);
+        game.load.image('ball', 'assets/img/planet2.png');
+        game.load.image('space', 'assets/img/SPACE.jpg');
     }
     
     var player;
