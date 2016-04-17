@@ -17,6 +17,7 @@ window.onload = function() {
     
     function preload() {
         game.load.audio('blip', 'assets/audio/Blip.ogg');
+        game.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         game.load.spritesheet('asteroid', 'assets/img/asteroid_sprite_sheet.png', 128, 128, 32);
         game.load.spritesheet('gasParticle', 'assets/img/GasParticleSpriteSheet.png', 256, 255.8, 30);
         game.load.image('ball', 'assets/img/planet2.png');
@@ -48,10 +49,16 @@ window.onload = function() {
     
     var sound;
 
+    var music;
+    
     function create() {
         
         // Background image
         var tilesprite = game.add.tileSprite(0,0,2000, 2000, 'space');
+        
+        // Soundtrack
+        music = game.add.audio('soundtrack1');
+        music.play();
         
         // Create sound sprite for blip noise
     	sound = game.add.audio('blip');
