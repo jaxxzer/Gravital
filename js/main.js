@@ -18,6 +18,7 @@ window.onload = function() {
     function preload() {
         game.load.audio('blip', 'assets/Blip.ogg');
         game.load.spritesheet('asteroid', 'assets/asteroid_sprite_sheet.png', 128, 128, 32);
+        game.load.spritesheet('gasParticle', 'assets/GasParticleSpriteSheet.png', 256, 255.8, 30);
         game.load.image('ball', 'assets/planet2.png');
         game.load.image('space', 'assets/SPACE.jpg');
     }
@@ -276,11 +277,11 @@ window.onload = function() {
         
         // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < 90; i++) {
-            var temp = planet.gas.create(500, 500, 'ball');
+            var temp = planet.gas.create(500, 500, 'gasParticle');
             game.physics.p2.enable(temp);
             temp.body.setCircle(10);
             temp.body.setCollisionGroup(gasCollisionGroup);
-            temp.scale.setTo(0.05);
+            temp.scale.setTo(0.25);
             temp.kill();
             temp.body.collides(asteroidCollisionGroup);
             temp.body.collideWorldBounds = false;
@@ -291,6 +292,10 @@ window.onload = function() {
             //temp.body.massType = 'special';
             temp.body.planetX = planet.x;
             temp.body.planetY = planet.y;
+            
+            var gasAnimation = temp.animations.add('gasAnimation');
+            temp.animations.play('gasAnimation', game.rnd.integerInRange(5,25), true);
+            temp.tint = 0xeeaa00;
         }
         
         // Scale planet according to size and density
