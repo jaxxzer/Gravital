@@ -18,7 +18,7 @@ window.onload = function() {
     function preload() {
         game.load.audio('blip', 'assets/Blip.ogg');
         game.load.spritesheet('asteroid', 'assets/asteroid_sprite_sheet.png', 128, 128, 32);
-        game.load.image('ball', 'assets/blueball.png');
+        game.load.image('ball', 'assets/planet2.png');
         game.load.image('space', 'assets/SPACE.jpg');
     }
     
