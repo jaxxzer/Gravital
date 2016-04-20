@@ -116,14 +116,16 @@ Gravital.Game.prototype =
         this.text.anchor.setTo(0.5, 0.0);
 	},
 	update: function()
-	{
+	{	
+		
 		this.updateAsteroids();
         this.updateComets();
         this.updateGasPlanets();
         
         this.updatePlayer();
-
-        //this.debugGame(); // Display some text with information
+		this.game.world.wrap(this.player.body, -50, false, true, true); //Make the world wrap around
+		
+        this.debugGame(); // Display some text with information
 	},
 	updatePlayer: function()
 	{
@@ -136,6 +138,7 @@ Gravital.Game.prototype =
         this.player.body.force.x += (this.G * Math.cos(angle) * this.player.body.mass * this.player.body.mass / r2);
         this.player.body.force.y += (this.G * Math.sin(angle) * this.player.body.mass * this.player.body.mass / r2);
         this.constrain_acceleration(this.player);
+		
 	},
 	updateAsteroids: function()
 	{
