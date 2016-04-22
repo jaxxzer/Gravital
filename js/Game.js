@@ -151,19 +151,21 @@ Gravital.Game.prototype =
 	},
 	updateComets: function()
 	{
-		var cometSpread = 0.1;
+		
         
         this.comets.forEachExists(this.updateComet,this);
 	},
 	updateComet: function(comet)
 	{     
+            var cometSpread = 0.1; // Factor for how much comet dust spreads out
+        
             // Update emitter position to match parent sprite
             comet.emitter.x = comet.x;
             comet.emitter.y = comet.y;
             
             // Update emitter spread according to velocity of parent sprite
-            comet.emitter.setXSpeed(-comet.body.velocity.x * this.cometSpread, comet.body.velocity.x * this.cometSpread);
-            comet.emitter.setYSpeed(-comet.body.velocity.y * this.cometSpread, comet.body.velocity.y * this.cometSpread);
+            comet.emitter.setXSpeed(-comet.body.velocity.x * cometSpread, comet.body.velocity.x * cometSpread);
+            comet.emitter.setYSpeed(-comet.body.velocity.y * cometSpread, comet.body.velocity.y * cometSpread);
             
             this.applyForce(comet); // Gravity
             this.checkBounds(comet); // Wrap around game boundaries
@@ -206,7 +208,7 @@ Gravital.Game.prototype =
 		this.newEnemy(asteroid);
 		
 		var spin = asteroid.animations.add('spin');
-		asteroid.animations.play('spin', this.game.rnd.integerInRange(5,25), true);
+		asteroid.animations.play('spin', 30, true);
 
 		asteroid.body.collides(this.asteroidCollisionGroup);
 		asteroid.body.collideWorldBounds = false;
@@ -269,7 +271,7 @@ Gravital.Game.prototype =
         
         // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < 90; i++) {
-            var temp = planet.gas.create(500, 500, 'gasParticle');
+            var temp = planet.gas.create(500, 500, 'gasParticleOrange');
             this.game.physics.p2.enable(temp);
             temp.body.setCircle(10);
             temp.body.setCollisionGroup(this.gasCollisionGroup);
@@ -287,7 +289,7 @@ Gravital.Game.prototype =
             
             var gasAnimation = temp.animations.add('gasAnimation');
             temp.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
-            temp.tint = 0xeeaa00;
+            //temp.tint = 0xeeaa00;
         }
         
         // Scale planet according to size and density

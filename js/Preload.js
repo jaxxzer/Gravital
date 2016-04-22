@@ -20,7 +20,7 @@ Gravital.Preload.prototype =
 		this.load.audio('blip', 'assets/audio/Blip.ogg');
 		this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         this.load.spritesheet('asteroid', 'assets/img/asteroid_sprite_sheet.png', 128, 128, 32);
-        this.load.spritesheet('gasParticle', 'assets/img/GasParticleSpriteSheet.png', 256, 255.8, 30);
+        this.load.spritesheet('gasParticleOrange', 'assets/img/GasParticleSpriteSheetOrange.png', 256, 255.8, 30);
         this.load.image('ball', 'assets/img/planet2.png');
         this.load.image('space', 'assets/img/SPACE.jpg');
 	},
