@@ -13,7 +13,7 @@ Gravital.Game.prototype =
 		this.worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
 		
 		//var G = 0.50;
-		this.G = 5000; // Gravitational constant
+		this.G = 10000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
 		this.numAsteroids = 50; // Number of masses other than the player that will be created
@@ -117,7 +117,8 @@ Gravital.Game.prototype =
 	},
 	update: function()
 	{	
-		
+		this.player.body.force.x = 0;
+        this.player.body.force.y = 0;
 		this.updateAsteroids();
         this.updateComets();
         this.updateGasPlanets();
@@ -127,13 +128,18 @@ Gravital.Game.prototype =
 		
         this.debugGame(); // Display some text with information
 	},
+    
 	updatePlayer: function()
 	{
 		//player.body.mass *= 0.9997; // Player looses mass at a rate proportional to current mass
-
+        
         // Add gravitational force between the player and the mouse, so that the player can be moved with the mouse
         var angle = this.get_angle(this.player.body, {"x":this.game.input.mousePointer.x+this.game.camera.x, "y":this.game.input.mousePointer.y+this.game.camera.y});
         var r2 = this.get_r2(this.player.body, {"x":this.game.input.mousePointer.x+this.game.camera.x, "y":this.game.input.mousePointer.y+this.game.camera.y});
+        if(r2 < this.player.height * this.player.height) {
+            r2 = this.player.height * this.player.height;
+        }
+
         
         this.player.body.force.x += (this.G * Math.cos(angle) * this.player.body.mass * this.player.body.mass / r2);
         this.player.body.force.y += (this.G * Math.sin(angle) * this.player.body.mass * this.player.body.mass / r2);
@@ -146,7 +152,7 @@ Gravital.Game.prototype =
 	},
 	updateAsteroid: function(asteroid)
 	{
-		this.applyForce(asteroid); // Gravity
+		this.applyGravity(asteroid, this.player); // Gravity
 		this.checkBounds(asteroid); // Wrap around game boundaries
 	},
 	updateComets: function()
@@ -168,7 +174,7 @@ Gravital.Game.prototype =
             comet.emitter.setXSpeed(-comet.body.velocity.x * cometSpread, comet.body.velocity.x * cometSpread);
             comet.emitter.setYSpeed(-comet.body.velocity.y * cometSpread, comet.body.velocity.y * cometSpread);
             
-            this.applyForce(comet); // Gravity
+            this.applyGravity(comet, this.player); // Gravity
             this.checkBounds(comet); // Wrap around game boundaries
 	},
 	updateGasPlanets: function()
@@ -192,13 +198,13 @@ Gravital.Game.prototype =
             
 			gasPlanet.gas.forEachExists(this.updateGas,this);
             
-            this.applyForce(gasPlanet); // Gravity
+            this.applyGravity(gasPlanet, this.player); // Gravity
             this.checkBounds(gasPlanet); // Wrap around game boundaries
 		
 	},
 	updateGas: function(gas)
 	{
-		this.applyForce(gas);
+		this.applyGravity(gas, this.player);
 		this.checkBounds(gas);
 	},
 	createAsteroid: function(x,y)
@@ -390,19 +396,18 @@ Gravital.Game.prototype =
         this.updateSize(sprite);
     },
 	
-	applyForce: function (item) 
+	applyGravity: function (sprite1, sprite2) 
 	{
-        if(item.length > 0) {
-            apply_forces(item);
-        } else {
 
-        var angle = this.get_angle(item, this.player);
-        var r2 = this.get_r2(item, this.player);
+        var angle = this.get_angle(sprite1, sprite2);
+        var r2 = this.get_r2(sprite1, sprite2);
 
-        item.body.force.x = (this.G * Math.cos(angle) * item.body.mass * this.player.body.mass) / r2;
-        item.body.force.y = (this.G * Math.sin(angle) * item.body.mass * this.player.body.mass) / r2;
-        this.constrain_acceleration(item);
-        }
+        sprite1.body.force.x = (this.G * Math.cos(angle) * sprite1.body.mass * sprite2.body.mass) / r2;
+        sprite1.body.force.y = (this.G * Math.sin(angle) * sprite1.body.mass * sprite2.body.mass) / r2;
+        this.constrain_acceleration(sprite1);
+        sprite2.body.force.x += -sprite1.body.force.x;
+        sprite2.body.force.y += -sprite1.body.force.y;
+        
     },
 	render: function()
 	{
