@@ -23,6 +23,7 @@ Gravital.Preload.prototype =
         this.load.spritesheet('gasParticleOrange', 'assets/img/GasParticleSpriteSheetOrange.png', 256, 255.8, 30);
         this.load.image('ball', 'assets/img/planet2.png');
         this.load.image('space', 'assets/img/SPACE.jpg');
+        this.load.image('comet', 'assets/img/comet2.png');
 	},
 	create: function() 
 	{

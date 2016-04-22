@@ -99,8 +99,8 @@ Gravital.Game.prototype =
         
         // Create comets
         var comet = this.createComet(500,500);
-        comet.body.velocity.x = 5;
-        comet.body.velocity.y = 5;
+        comet.body.velocity.x = 50;
+        comet.body.velocity.y = -50;
         
         var comet2 = this.createComet(0,0);
         comet2.body.velocity.x = 500;
@@ -162,6 +162,7 @@ Gravital.Game.prototype =
             // Update emitter position to match parent sprite
             comet.emitter.x = comet.x;
             comet.emitter.y = comet.y;
+            comet.body.rotation = Math.atan2(comet.body.velocity.y, comet.body.velocity.x) - 2.4;
             
             // Update emitter spread according to velocity of parent sprite
             comet.emitter.setXSpeed(-comet.body.velocity.x * cometSpread, comet.body.velocity.x * cometSpread);
@@ -222,9 +223,9 @@ Gravital.Game.prototype =
 	},
 	createComet: function(x,y)
 	{
-		var comet = this.game.add.sprite(x, y, 'ball');
+		var comet = this.game.add.sprite(x, y, 'comet');
         comet.anchor.setTo(0.5);
-        comet.scale.setTo(0.03);
+        comet.scale.setTo(0.2);
         
         this.game.physics.p2.enable(comet);
         comet.body.mass = 0.0001;
