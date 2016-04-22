@@ -21,9 +21,11 @@ Gravital.Game.prototype =
 		this.asteroidCollisionGroup; // CollisionGroup for the masses
 
 		this.comets; // Group of all comets
-		
+		this.cometCollisionGroup;
+        
 		this.gasPlanets; // Group of all gas planets
 		this.gasCollisionGroup;
+        this.gasPlanetCollisionGroup;
 		
 		this.enemyDensity = 100.0; // Density of enemies
 		this.playerDensity = 100.0; // Density of the player
@@ -54,6 +56,8 @@ Gravital.Game.prototype =
         //Create new CollisionGroup for the masses
     	this.asteroidCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.gasCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.gasPlanetCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.cometCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
         this.game.physics.p2.setImpactEvents(true);
         
@@ -82,11 +86,12 @@ Gravital.Game.prototype =
         this.player.body.damping = 0;
         
         // Enable collisions between the player and children of asteroidCollisionGroup
-        this.player.body.collides([this.asteroidCollisionGroup, this.gasCollisionGroup]);
+        this.player.body.collides([this.asteroidCollisionGroup, this.gasCollisionGroup, this.gasPlanetCollisionGroup]);
         
         // Set the callback method when player collides with another mass
         this.player.body.createGroupCallback(this.asteroidCollisionGroup, this.absorbAsteroid, this);
         this.player.body.createGroupCallback(this.gasCollisionGroup, this.absorbGas, this);
+        this.player.body.createGroupCallback(this.gasPlanetCollisionGroup, this.absorbGasPlanet, this);
         
 //        player.body.debug = true; // Will show the P2 physics body
         
@@ -214,6 +219,7 @@ Gravital.Game.prototype =
 	{
 		var asteroid = this.asteroids.create(x, y, 'asteroid');
 		this.game.physics.p2.enable(asteroid);
+        asteroid.massType = 1;
 		asteroid.body.density = this.enemyDensity;
 		this.newEnemy(asteroid);
 		
@@ -237,6 +243,8 @@ Gravital.Game.prototype =
         comet.scale.setTo(0.2);
         
         this.game.physics.p2.enable(comet);
+        comet.body.setCollisionGroup(this.cometCollisionGroup);
+        comet.massType = 2;
         comet.body.mass = 0.0001;
         comet.body.damping = 0;
         comet.emitter = this.game.add.emitter(comet.x, comet.y, 300);
@@ -248,7 +256,7 @@ Gravital.Game.prototype =
         comet.emitter.minParticleScale = 0.01;
         comet.emitter.maxParticleScale = 0.01;
         
-        comet.emitter.makeParticles('ball');
+        comet.emitter.makeParticles('cometDust');
         comet.emitter.setAll('body.mass', 0.00001);
         comet.emitter.setXSpeed(-100, 100);
         comet.emitter.setYSpeed(-100, 100);
@@ -266,6 +274,7 @@ Gravital.Game.prototype =
 		var planet = this.game.add.sprite(x,y, 'ball');
         planet.anchor.setTo(0.5);
         planet.scale.setTo(2);
+        planet.massType = 3;
         
         this.game.physics.p2.enable(planet);
         planet.body.mass = 500;
@@ -283,6 +292,7 @@ Gravital.Game.prototype =
         for(var i = 0; i < 90; i++) {
             var temp = planet.gas.create(500, 500, 'gasParticleOrange');
             this.game.physics.p2.enable(temp);
+            temp.massType = 4;
             temp.body.setCircle(10);
             temp.body.setCollisionGroup(this.gasCollisionGroup);
             temp.scale.setTo(0.25);
@@ -304,7 +314,8 @@ Gravital.Game.prototype =
         
         // Scale planet according to size and density
         this.updateSize(planet);
-        
+        planet.body.setCollisionGroup(this.gasPlanetCollisionGroup);
+        planet.body.collides(this.asteroidCollisionGroup);
         // Add planet to the gasPlanets group
         this.gasPlanets.add(planet);
         
@@ -339,13 +350,51 @@ Gravital.Game.prototype =
         this.updateSize(body1.sprite); // Player grows
         this.resetBody(body2); // Reset the mass that was absorbed
 	},
-	updateSize: function (sprite) 
+    absorbGasPlanet: function(GasPlanet, player) {
+//        if() {
+//            
+//        } else {
+//            gameOver();
+//        }
+    },
+    gameOver: function() {
+        
+    },
+    fadingText(x, y, height, duration) {
+        
+    },
+	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
 		scaleFactor = Math.cbrt(scaleFactor);
+        
         sprite.scale.setTo(scaleFactor); // Update size based on mass and density
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
-        sprite.body.setCollisionGroup(this.asteroidCollisionGroup); // CollisionGroup must be updated when a new body is created
+        switch(sprite.massType) {
+                
+            case 1:
+                sprite.body.setCollisionGroup(this.asteroidCollisionGroup); // CollisionGroup must be updated when a new body is created
+                break;
+            case 2:
+                sprite.body.setCollisionGroup(this.cometCollisionGroup);
+                break;
+            case 3:
+                sprite.body.setCollisionGroup(this.gasPlanetCollisionGroup);
+                break;
+            case 4:
+                sprite.body.setCollisionGroup(this.gasCollisionGroup);
+                break;
+            default:
+                sprite.body.setCollisionGroup(this.asteroidCollisionGroup);
+                break;
+        }
+    },
+    getImageScaleFactor(sprite) {
+        sprite.scale.setTo(1);
+        var imgHeight = sprite.height;
+        var scaleFactor = 1000 / imgHeight;
+
+        
     },
 	checkBounds: function (sprite) 
 	{

@@ -23,7 +23,8 @@ Gravital.Preload.prototype =
         this.load.spritesheet('gasParticleOrange', 'assets/img/GasParticleSpriteSheetOrange.png', 256, 255.8, 30);
         this.load.image('ball', 'assets/img/planet2.png');
         this.load.image('space', 'assets/img/SPACE.jpg');
-        this.load.image('comet', 'assets/img/comet2.png');
+        this.load.image('comet', 'assets/img/comet.png');
+        this.load.image('cometDust', 'assets/img/cometDust.png');
         this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
 	},
 	create: function() 
