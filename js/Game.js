@@ -7,13 +7,24 @@ Gravital.Game.prototype =
 	{
 		// declare variables;
 		
+//        var spriteTest1 = this.game.add.sprite(400, 600, 'ball');
+//        spriteTest1.anchor.setTo(0.5);
+//        spriteTest1.px1000 = this.getImageScale1000px(spriteTest1);
+//        spriteTest1.scale.setTo(spriteTest1.px1000);
+//        
+//        var spriteTest2 = this.game.add.sprite(500, 500, 'ball');
+//        spriteTest2.anchor.setTo(0.5);
+//        spriteTest2.px1000 = this.getImageScale1000px(spriteTest2);
+//        spriteTest2.scale.setTo(spriteTest1.px1000*0.5);
+        
+        
 		this.player;
 		this.text; // Debug text
 		
 		this.worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
 		
 		//var G = 0.50;
-		this.G = 10000; // Gravitational constant
+		this.G = 3000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
 		this.numAsteroids = 50; // Number of masses other than the player that will be created
@@ -67,6 +78,7 @@ Gravital.Game.prototype =
         
         // Create a sprite at the center of the screen using the 'logo' image.
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'asteroid' );
+        this.player.px1000 = this.getImageScale1000px(this.player);
         
         // Camera will follow player around the playable area
         this.game.camera.follow(this.player);
@@ -218,6 +230,7 @@ Gravital.Game.prototype =
 	createAsteroid: function(x,y)
 	{
 		var asteroid = this.asteroids.create(x, y, 'asteroid');
+        asteroid.px1000 = this.getImageScale1000px(asteroid);
 		this.game.physics.p2.enable(asteroid);
         asteroid.massType = 1;
 		asteroid.body.density = this.enemyDensity;
@@ -239,6 +252,7 @@ Gravital.Game.prototype =
 	createComet: function(x,y)
 	{
 		var comet = this.game.add.sprite(x, y, 'comet');
+        comet.px1000 = this.getImageScale1000px(comet);
         comet.anchor.setTo(0.5);
         comet.scale.setTo(0.2);
         
@@ -272,13 +286,14 @@ Gravital.Game.prototype =
 	createGasPlanet: function(x,y)
 	{
 		var planet = this.game.add.sprite(x,y, 'ball');
+        planet.px1000 = this.getImageScale1000px(planet);
         planet.anchor.setTo(0.5);
         planet.scale.setTo(2);
         planet.massType = 3;
         
         this.game.physics.p2.enable(planet);
-        planet.body.mass = 500;
-        planet.body.density = 50;
+        planet.body.mass = 2000;
+        planet.body.density = .25;
         
         
         // Timer to control emission of gas
@@ -291,6 +306,7 @@ Gravital.Game.prototype =
         // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < 90; i++) {
             var temp = planet.gas.create(500, 500, 'gasParticleOrange');
+            temp.px1000 = this.getImageScale1000px(temp);
             this.game.physics.p2.enable(temp);
             temp.massType = 4;
             temp.body.setCircle(10);
@@ -366,9 +382,9 @@ Gravital.Game.prototype =
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
-		scaleFactor = Math.cbrt(scaleFactor);
+		scaleFactor = Math.sqrt(Math.cbrt(scaleFactor));
         
-        sprite.scale.setTo(scaleFactor); // Update size based on mass and density
+        sprite.scale.setTo(sprite.px1000 * scaleFactor * 0.1); // Update size based on mass and density
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
         switch(sprite.massType) {
                 
@@ -389,12 +405,9 @@ Gravital.Game.prototype =
                 break;
         }
     },
-    getImageScaleFactor(sprite) {
+    getImageScale1000px: function (sprite) {
         sprite.scale.setTo(1);
-        var imgHeight = sprite.height;
-        var scaleFactor = 1000 / imgHeight;
-
-        
+        return 1000.0 / sprite.height;  
     },
 	checkBounds: function (sprite) 
 	{
@@ -472,7 +485,7 @@ Gravital.Game.prototype =
                     + this.player.body.mass.toFixed(4)
                     + "\nplayer.radius: "
                     + this.player.height/2
-                    + "\nx: " + this.player.x + " y: " + this.player.y);
+                    + "\nx: " + this.player.x + " y: " + this.debugText);
         this.text.x = this.game.camera.x + this.text.width;
         this.text.y = this.game.camera.y + this.game.camera.height - this.text.height;
     },
