@@ -24,7 +24,7 @@ Gravital.Game.prototype =
 		this.worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
 		
 		//var G = 0.50;
-		this.G = 3000; // Gravitational constant
+		this.G = 3500; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
 		this.numAsteroids = 50; // Number of masses other than the player that will be created
@@ -37,7 +37,12 @@ Gravital.Game.prototype =
 		this.gasPlanets; // Group of all gas planets
 		this.gasCollisionGroup;
         this.gasPlanetCollisionGroup;
-		
+        
+        this.asteroidDensity = 1.0;
+        this.cometDensity = 1.0;
+        this.gasDensity = 1.0;
+        this.gasParticleDensity = 1.0;
+        
 		this.enemyDensity = 100.0; // Density of enemies
 		this.playerDensity = 100.0; // Density of the player
 		
