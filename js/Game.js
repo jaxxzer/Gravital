@@ -35,7 +35,10 @@ Gravital.Game.prototype =
 		
 		
 		// actual "Create"
-		
+		// Play music
+        var music = this.add.audio('soundtrack1');
+        music.play();
+        
 		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
         
         // Create sound sprite for blip noise
