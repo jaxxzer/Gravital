@@ -54,8 +54,8 @@ Gravital.Game.prototype =
 		
 		// actual "Create"
 		// Play music
-        var music = this.add.audio('soundtrack1');
-        music.play();
+        this.music = this.add.audio('soundtrack1');
+        this.music.play();
         
 		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
         
@@ -389,7 +389,8 @@ Gravital.Game.prototype =
 //        if() {
 //            
 //        } else {
-//            gameOver();
+            this.music.stop();
+            this.game.state.start('MainMenu');
 //        }
     },
     gameOver: function() {
