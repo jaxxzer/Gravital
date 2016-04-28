@@ -245,7 +245,8 @@ Gravital.Game.prototype =
 		this.game.physics.p2.enable(asteroid);
         asteroid.massType = 'asteroid';
 		asteroid.body.density = this.enemyDensity;
-		this.newEnemy(asteroid);
+        asteroid.body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
+        this.updateSize(asteroid);
 		
 		var spin = asteroid.animations.add('spin');
 		asteroid.animations.play('spin', 30, true);
@@ -380,8 +381,6 @@ Gravital.Game.prototype =
                 } else {
                     this.updateSize(GasPlanet);
                 }
-
-
             }
         }
 	},
@@ -398,7 +397,7 @@ Gravital.Game.prototype =
  
         }
         this.updateSize(body1.sprite); // Player grows
-        this.resetBody(body2); // Reset the mass that was absorbed
+        this.resetAsteroid(body2); // Reset the mass that was absorbed
 	},
     absorbGasPlanet: function(GasPlanet, player) {
 //        if() {
@@ -460,7 +459,7 @@ Gravital.Game.prototype =
             sprite.body.y = 0 - this.worldBuffer;
         } 
     },
-	resetBody: function (body) 
+	resetAsteroid: function (body) 
 	{
 
         var side = this.game.rnd.integerInRange(1,4);
@@ -486,16 +485,9 @@ Gravital.Game.prototype =
         }
 
         body.reset(newX, newY); // Put the sprite there
-        this.newEnemy(body.sprite); // Give the sprite a new mass / size
-    },
-	
-	// This will spawn new enemies according to the context of the game
-    // Enemy types might be asteroids, planets, moons, stars, comets, dust, or black holes
-    // The likleyhood of each type of enemy spawning could be set to tune gameplay experience
-    newEnemy: function (sprite) 
-	{
-        sprite.body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
-        this.updateSize(sprite);
+        // Give the sprite a new mass / size
+        body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
+        this.updateSize(body.sprite);
     },
 	
 	applyGravity: function (sprite1, sprite2) 
@@ -580,9 +572,5 @@ Gravital.Game.prototype =
         } else if(force_y < -this.force_max) {
             object.body.force.y = -this.force_max;
         }
-    }
-	
-	
-	
-	
+    }	
 };
