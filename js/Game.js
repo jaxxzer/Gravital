@@ -24,7 +24,7 @@ Gravital.Game.prototype =
 		this.worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
 		
 		//var G = 0.50;
-		this.G = 3500; // Gravitational constant
+		this.G = 10000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
 		this.numAsteroids = 50; // Number of masses other than the player that will be created
@@ -39,9 +39,9 @@ Gravital.Game.prototype =
         this.gasPlanetCollisionGroup;
         
         this.asteroidDensity = 1.0;
-        this.cometDensity = 1.0;
-        this.gasDensity = 1.0;
-        this.gasParticleDensity = 1.0;
+        this.cometDensity = 1.5;
+        this.gasDensity = 0.25;
+        this.gasParticleDensity = 0.5;
         
 		this.enemyDensity = 100.0; // Density of enemies
 		this.playerDensity = 100.0; // Density of the player
@@ -54,8 +54,8 @@ Gravital.Game.prototype =
 		
 		// actual "Create"
 		// Play music
-        var music = this.add.audio('soundtrack1');
-        music.play();
+        this.music = this.add.audio('soundtrack1');
+        this.music.play();
         
 		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
         
@@ -204,27 +204,33 @@ Gravital.Game.prototype =
 	},
 	updateGasPlanets: function()
 	{
-		this.gasPlanets.forEachExists(this.updateGasPlanet,this);
+        this.gasPlanets.forEach(this.updateGasPlanet,this, false);
+
+		
 	},
 	updateGasPlanet: function(gasPlanet)
 	{
-            
-            // Update emission rate of gas particles according to proximity to player
-            var distance = this.get_dist(this.player, gasPlanet);
-            distance -= gasPlanet.height/2;
+            gasPlanet.gas.forEachAlive(this.updateGas,this);
+            if(gasPlanet.alive) {
+                // Update emission rate of gas particles according to proximity to player
+                var distance = this.get_dist(this.player, gasPlanet);
+                distance -= gasPlanet.height/2;
 
-            if(distance > 400) {
-                gasPlanet.timer.pause();
-            } else{
+                if(distance > 400) {
+                    gasPlanet.timer.pause();
+                } else{
 
-                gasPlanet.timer.resume();
-                gasPlanet.timer.events[0].delay = distance*3;
-            }
-            
-			gasPlanet.gas.forEachExists(this.updateGas,this);
-            
-            this.applyGravity(gasPlanet, this.player); // Gravity
-            this.checkBounds(gasPlanet); // Wrap around game boundaries
+                    gasPlanet.timer.resume();
+                    gasPlanet.timer.events[0].delay = distance*3;
+                }
+                this.applyGravity(gasPlanet, this.player); // Gravity
+                this.checkBounds(gasPlanet); // Wrap around game boundaries
+            } else {
+                if(gasPlanet.gas.countLiving() < 1) {
+                    this.gasPlanets.remove(gasPlanet);
+                    gasPlanet.destroy();
+                }
+            }  
 		
 	},
 	updateGas: function(gas)
@@ -237,7 +243,7 @@ Gravital.Game.prototype =
 		var asteroid = this.asteroids.create(x, y, 'asteroid');
         asteroid.px1000 = this.getImageScale1000px(asteroid);
 		this.game.physics.p2.enable(asteroid);
-        asteroid.massType = 1;
+        asteroid.massType = 'asteroid';
 		asteroid.body.density = this.enemyDensity;
 		this.newEnemy(asteroid);
 		
@@ -263,7 +269,7 @@ Gravital.Game.prototype =
         
         this.game.physics.p2.enable(comet);
         comet.body.setCollisionGroup(this.cometCollisionGroup);
-        comet.massType = 2;
+        comet.massType = 'comet';
         comet.body.mass = 0.0001;
         comet.body.damping = 0;
         comet.emitter = this.game.add.emitter(comet.x, comet.y, 300);
@@ -294,11 +300,13 @@ Gravital.Game.prototype =
         planet.px1000 = this.getImageScale1000px(planet);
         planet.anchor.setTo(0.5);
         planet.scale.setTo(2);
-        planet.massType = 3;
+        planet.massType = 'gasPlanet';
         
         this.game.physics.p2.enable(planet);
-        planet.body.mass = 2000;
+        planet.body.mass = 200;
         planet.body.density = .25;
+        
+        planet.body.collideWorldBounds = false;
         
         
         // Timer to control emission of gas
@@ -308,21 +316,27 @@ Gravital.Game.prototype =
         
         planet.gas = this.game.add.group(); // Group for the gas planet's emitted gas particles
         
+        var numGasParticles = 300
         // Create the gas particles (they won't be emitted until player is close enough)
-        for(var i = 0; i < 90; i++) {
+        for(var i = 0; i < numGasParticles; i++) {
             var temp = planet.gas.create(500, 500, 'gasParticleOrange');
-            temp.px1000 = this.getImageScale1000px(temp);
+
             this.game.physics.p2.enable(temp);
-            temp.massType = 4;
-            temp.body.setCircle(10);
+            temp.px1000 = this.getImageScale1000px(temp);
+            temp.massType = 'gasParticle';
+            
+            temp.body.mass = planet.body.mass/numGasParticles;
+            temp.body.density = planet.body.density * 4;
+            
+            //temp.body.setCircle(10);
+            this.updateSize(temp);
             temp.body.setCollisionGroup(this.gasCollisionGroup);
-            temp.scale.setTo(0.25);
+            //temp.scale.setTo(0.25);
             temp.kill();
             temp.body.collides(this.asteroidCollisionGroup);
             temp.body.collideWorldBounds = false;
             temp.body.damping = 0;
-            temp.body.mass = 3;
-            temp.body.density = 5000;
+           
             //updateSize(temp); // ToDo: Tune gas mass and density so we can use this
             //temp.body.massType = 'special';
             temp.body.planetX = planet.x;
@@ -342,23 +356,38 @@ Gravital.Game.prototype =
         
         return planet;  
 	},
+    
 	emitGas: function(GasPlanet)
 	{
-		var nextgas = GasPlanet.gas.getFirstDead();
-        if(nextgas) {
-            var angle = this.get_angle(GasPlanet, this.player);
-            angle += this.game.rnd.frac() * 0.3 * this.game.rnd.integerInRange(-1,1);
-            nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.height/2 - nextgas.height*2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height*2));
-            //GasPlanet.body.mass -= nextgas.body.mass;
-            nextgas.revive();
-            if(GasPlanet.body.mass > 50) {
+        if(GasPlanet.alive) {
+            var nextgas = GasPlanet.gas.getFirstDead();
+            if(nextgas) {
+                var angle = this.get_angle(this.player, GasPlanet);
+                angle += this.game.rnd.frac() * 0.3 * this.game.rnd.integerInRange(-1,1);
+                nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.massRadius + nextgas.massRadius), GasPlanet.y + Math.sin(angle)*(GasPlanet.massRadius + nextgas.massRadius));
+
+                nextgas.revive();
+
+
                 GasPlanet.body.mass -= nextgas.body.mass;
-                this.updateSize(GasPlanet);
+                if(GasPlanet.body.mass <= 0) {
+                    GasPlanet.timer.stop();
+                    //this.gasPlanets.remove(GasPlanet);
+                    GasPlanet.kill();
+                    this.createGasPlanet(200,200);
+                    //GasPlanet.kill();
+
+                } else {
+                    this.updateSize(GasPlanet);
+                }
+
+
             }
         }
 	},
 	absorbGas: function(body1, body2)
 	{
+        body1.mass += body2.mass;
 		body2.sprite.kill();
 	},
 	absorbAsteroid: function(body1, body2)
@@ -375,7 +404,8 @@ Gravital.Game.prototype =
 //        if() {
 //            
 //        } else {
-//            gameOver();
+            //this.music.stop();
+            //this.game.state.start('MainMenu');
 //        }
     },
     gameOver: function() {
@@ -387,22 +417,24 @@ Gravital.Game.prototype =
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
-		scaleFactor = Math.sqrt(Math.cbrt(scaleFactor));
+		scaleFactor = Math.cbrt(scaleFactor);
+        scaleFactor *= 0.1;
+        sprite.massRadius = sprite.px1000 * scaleFactor;
         
-        sprite.scale.setTo(sprite.px1000 * scaleFactor * 0.1); // Update size based on mass and density
+        sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
         switch(sprite.massType) {
                 
-            case 1:
+            case 'asteroid':
                 sprite.body.setCollisionGroup(this.asteroidCollisionGroup); // CollisionGroup must be updated when a new body is created
                 break;
-            case 2:
+            case 'comet':
                 sprite.body.setCollisionGroup(this.cometCollisionGroup);
                 break;
-            case 3:
+            case 'gasPlanet':
                 sprite.body.setCollisionGroup(this.gasPlanetCollisionGroup);
                 break;
-            case 4:
+            case 'gasParticle':
                 sprite.body.setCollisionGroup(this.gasCollisionGroup);
                 break;
             default:
