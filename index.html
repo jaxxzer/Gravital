@@ -93,7 +93,9 @@ Encounter many different masses with various physical properties like density an
 <h4>Prototype Closest Other Game:</h4>
 <p>I came up with this myself, but there is a game called agar.io that is similar in some ways.</p>
 
-
+<h4>Implementation:</h4>
+<p>The player's and gasPlanet's collision areas are constantly updated, as they are scaled according to mass and density.
+Gas planets emit gas particles at a rate proportional to the player proximity. As the player gets closer, gas particles are emitted more quickly. The gas particles are also emitted at the edge of the gas planet facing the player. This required extending the Gas Planet Sprite class to act as an Emitter. The sprite has a group of pooled, recyclable gas particles, and a timer that controls when they are emitted.</p>
 
 </div>
 </body>

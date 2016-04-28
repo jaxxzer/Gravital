@@ -363,12 +363,14 @@ Gravital.Game.prototype =
         if(GasPlanet.alive) {
             var nextgas = GasPlanet.gas.getFirstDead();
             if(nextgas) {
-                var angle = this.get_angle(this.player, GasPlanet);
+                var angle = this.get_angle(GasPlanet, this.player);
                 angle += this.game.rnd.frac() * 0.3 * this.game.rnd.integerInRange(-1,1);
-                nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.massRadius + nextgas.massRadius), GasPlanet.y + Math.sin(angle)*(GasPlanet.massRadius + nextgas.massRadius));
+                nextgas.reset(GasPlanet.x + Math.cos(angle) * (GasPlanet.height/2 - nextgas.height/2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height/2));
+                nextgas.body.velocity.x = GasPlanet.body.velocity.x;
+                nextgas.body.velocity.y = GasPlanet.body.velocity.y;
 
                 nextgas.revive();
-
+                this.text.setText(GasPlanet.height/2);
 
                 GasPlanet.body.mass -= nextgas.body.mass;
                 if(GasPlanet.body.mass <= 0) {
@@ -386,11 +388,13 @@ Gravital.Game.prototype =
 	},
 	absorbGas: function(body1, body2)
 	{
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
         body1.mass += body2.mass;
 		body2.sprite.kill();
 	},
 	absorbAsteroid: function(body1, body2)
 	{
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
 		this.sound.play('blip');
         if(this.player.body.mass < 10000) {
             body1.mass += body2.mass; // Player absorbs mass
@@ -418,9 +422,10 @@ Gravital.Game.prototype =
 		var scaleFactor = sprite.body.mass/sprite.body.density;
 		scaleFactor = Math.cbrt(scaleFactor);
         scaleFactor *= 0.1;
-        sprite.massRadius = sprite.px1000 * scaleFactor;
-        
-        sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density
+        //scaleFactor *= 10 / Math.sqrt(this.player.body.mass);
+    
+        sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density 10
+        sprite.massRadius = sprite.height/2;
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
         switch(sprite.massType) {
                 
@@ -489,6 +494,19 @@ Gravital.Game.prototype =
         body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
         this.updateSize(body.sprite);
     },
+    animateText(x, y, text) {
+        var animatedText;
+        var style = { font: "18px Verdana", fill: "#ffffff", align: "center" };
+        animatedText = this.game.add.text( x, y, 100, style );
+        animatedText.anchor.setTo(0.5, 0.5);
+        animatedText.setText(text);
+        animatedText.x = x;
+        animatedText.y = y;
+        animatedText.alpha = 1;
+        this.game.time.events.add(0, function() {
+            this.game.add.tween(animatedText).to({y: y - 30}, 500, Phaser.Easing.Linear.None, true);    this.game.add.tween(animatedText).to({alpha: 0}, 500, Phaser.Easing.Linear.None, true);
+        }, this); 
+    },
 	
 	applyGravity: function (sprite1, sprite2) 
 	{
@@ -509,12 +527,12 @@ Gravital.Game.prototype =
 	},
 	debugGame: function () 
 	{
-        this.text.setText("\
-                        player.mass: " 
-                    + this.player.body.mass.toFixed(4)
-                    + "\nplayer.radius: "
-                    + this.player.height/2
-                    + "\nx: " + this.player.x + " y: " + this.debugText);
+//        this.text.setText("\
+//                        player.mass: " 
+//                    + this.player.body.mass.toFixed(4)
+//                    + "\nplayer.radius: "
+//                    + this.player.height/2
+//                    + "\nx: " + this.player.x + " y: " + this.debugText);
         this.text.x = this.game.camera.x + this.text.width;
         this.text.y = this.game.camera.y + this.game.camera.height - this.text.height;
     },
