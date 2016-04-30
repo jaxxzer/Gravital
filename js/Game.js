@@ -304,8 +304,8 @@ Gravital.Game.prototype =
         planet.massType = 'gasPlanet';
         
         this.game.physics.p2.enable(planet);
-        planet.body.mass = 200;
-        planet.body.density = .25;
+        planet.body.mass = 750;
+        planet.body.density = 40.0;
         
         planet.body.collideWorldBounds = false;
         
@@ -327,7 +327,7 @@ Gravital.Game.prototype =
             temp.massType = 'gasParticle';
             
             temp.body.mass = planet.body.mass/numGasParticles;
-            temp.body.density = planet.body.density * 4;
+            temp.body.density = planet.body.density;
             
             //temp.body.setCircle(10);
             this.updateSize(temp);
@@ -370,22 +370,22 @@ Gravital.Game.prototype =
                 nextgas.body.velocity.y = GasPlanet.body.velocity.y;
 
                 nextgas.revive();
-                this.text.setText(GasPlanet.height/2);
+                this.text.setText(GasPlanet.height + "," + this.player.height);
 
                 GasPlanet.body.mass -= nextgas.body.mass;
                 if(GasPlanet.body.mass <= 0) {
-                    GasPlanet.timer.stop();
-                    //this.gasPlanets.remove(GasPlanet);
-                    GasPlanet.kill();
-                    this.createGasPlanet(200,200);
-                    //GasPlanet.kill();
-
+                    this.resetGasPlanet(GasPlanet);
                 } else {
                     this.updateSize(GasPlanet);
                 }
             }
         }
 	},
+    resetGasPlanet: function(gasPlanet) {
+            gasPlanet.timer.stop();
+            gasPlanet.kill();
+            this.createGasPlanet(200,200);
+    },
 	absorbGas: function(body1, body2)
 	{
         this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
@@ -403,13 +403,14 @@ Gravital.Game.prototype =
         this.updateSize(body1.sprite); // Player grows
         this.resetAsteroid(body2); // Reset the mass that was absorbed
 	},
-    absorbGasPlanet: function(GasPlanet, player) {
-//        if() {
-//            
-//        } else {
-            //this.music.stop();
-            //this.game.state.start('MainMenu');
-//        }
+    absorbGasPlanet: function(playerBody, gasPlanetBody) {
+        if(playerBody.sprite.height >= gasPlanetBody.sprite.height) {
+            playerBody.mass += gasPlanetBody.mass;
+            this.resetGasPlanet(gasPlanetBody.sprite);
+        } else {
+            this.music.stop();
+            this.game.state.start('MainMenu');
+        }
     },
     gameOver: function() {
         
