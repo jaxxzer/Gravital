@@ -24,17 +24,15 @@ Gravital.Tutorial.prototype =
 		plan.scale.setTo(0.5,0.5);
 		
 		//Animation for Gas Planet Emitter	
-		// plan.gas = this.game.add.group();
-//         var temp = plan.gas.create(750, 200, 'gasParticleOrange');
-//         temp.kill();
-//         var gasAnimation = temp.animations.add('gasAnimation');
-//         temp.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
+		var gas = this.game.add.sprite(720,170, 'gasParticleOrange');
+        var gasAnimation = gas.animations.add('gasAnimation');
+        gas.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
 		
   	
 		//Gas Planet text
-		var ptext = "This is a gas planet. If it's larger than you, it'll kill you.\n If it's not, you can absorb it.\nIt emits gas particles you can absorb to get larger."
+		var ptext = "This is a gas planet. If it's larger than you, it'll kill you.\n If it's not, you can absorb it. Careful of its gravity.\nIt emits gas particles you can absorb to get larger."
 		var pstyle = { font: "20px Arial", fill: "#fff", align: "right" };
-		var pt = this.game.add.text(480, 300, ptext, pstyle);
+		var pt = this.game.add.text(480, 290, ptext, pstyle);
 		pt.anchor.set(0.5);	
 		
 		//The Comet
