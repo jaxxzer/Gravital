@@ -38,6 +38,9 @@ Gravital.Game.prototype =
 		this.gasCollisionGroup;
         this.gasPlanetCollisionGroup;
         
+        this.specialObjects;
+        this.specialCollisionGroup;
+        
         this.asteroidDensity = 1.0;
         this.cometDensity = 1.5;
         this.gasDensity = 0.25;
@@ -60,9 +63,9 @@ Gravital.Game.prototype =
 		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
         
         // Create sound sprite for blip noise
-    	this.sound = this.game.add.audio('blip');
+    	this.sound = this.game.add.audio('asteroidHit');
     	this.sound.allowMultiple = true;
-    	this.sound.addMarker('blip', 0.0, 1.0);
+    	this.sound.addMarker('asteroidHit', 0.0, 1.0);
         
         // Set the playable area
         this.game.world.setBounds(0, 0, 2000,2000);
@@ -357,7 +360,23 @@ Gravital.Game.prototype =
         
         return planet;  
 	},
-    
+    createUFO: function(x, y, vx, vy, mass, density) {
+        
+        var specialObject = this.game.add.sprite(x, y, 'UFO');
+        this.game.physics.p2.enable(sprite);
+        sprite.px1000 = this.getImageScale1000px(sprite);
+        this.setupMass(specialObject);
+        sprite.body.mass = mass;
+        sprite.body.density = density;
+        this.updateSize(sprite);
+        sprite.body.velocity.x = vx;
+        sprite.body.velocity.y = vy;
+        
+        return sprite;
+    },
+    setupMass: function(sprite) {
+
+    },
 	emitGas: function(GasPlanet)
 	{
         if(GasPlanet.alive) {
@@ -395,7 +414,7 @@ Gravital.Game.prototype =
 	absorbAsteroid: function(body1, body2)
 	{
         this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
-		this.sound.play('blip');
+		this.sound.play('asteroidHit');
         if(this.player.body.mass < 10000) {
             body1.mass += body2.mass; // Player absorbs mass
  
