@@ -17,7 +17,7 @@ Gravital.Game.prototype =
 //        spriteTest2.px1000 = this.getImageScale1000px(spriteTest2);
 //        spriteTest2.scale.setTo(spriteTest1.px1000*0.5);
         
-        
+        //this.game.stage.scale.startFullScreen();
 		this.player;
 		this.text; // Debug text
 		
@@ -38,6 +38,9 @@ Gravital.Game.prototype =
 		this.gasCollisionGroup;
         this.gasPlanetCollisionGroup;
         
+        this.specialObjects;
+        this.specialCollisionGroup;
+        
         this.asteroidDensity = 1.0;
         this.cometDensity = 1.5;
         this.gasDensity = 0.25;
@@ -50,19 +53,20 @@ Gravital.Game.prototype =
 		
 		this.sound;
 		
-		
+		this.globalScaleFactor = 1;
 		
 		// actual "Create"
 		// Play music
         this.music = this.add.audio('soundtrack1');
         this.music.play();
         
-		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
+		this.tilesprite = this.game.add.tileSprite(0,0,4000, 4000, 'space');
+        this.tilesprite.scale.setTo(1, 1);
         
         // Create sound sprite for blip noise
-    	this.sound = this.game.add.audio('blip');
+    	this.sound = this.game.add.audio('asteroidHit');
     	this.sound.allowMultiple = true;
-    	this.sound.addMarker('blip', 0.0, 1.0);
+    	this.sound.addMarker('asteroidHit', 0.0, 1.0);
         
         // Set the playable area
         this.game.world.setBounds(0, 0, 2000,2000);
@@ -80,9 +84,11 @@ Gravital.Game.prototype =
         this.gasPlanets = this.game.add.group();
         this.comets = this.game.add.group();
         this.asteroids = this.game.add.group();
+        this.specialObjects = this.game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'asteroid' );
+        this.player.massType = 'asteroid';
         this.player.px1000 = this.getImageScale1000px(this.player);
         
         // Camera will follow player around the playable area
@@ -110,8 +116,6 @@ Gravital.Game.prototype =
         this.player.body.createGroupCallback(this.gasCollisionGroup, this.absorbGas, this);
         this.player.body.createGroupCallback(this.gasPlanetCollisionGroup, this.absorbGasPlanet, this);
         
-//        player.body.debug = true; // Will show the P2 physics body
-        
         // Animate the player sprite
         var spin = this.player.animations.add('spin');
         this.player.animations.play('spin', 15, true);
@@ -134,12 +138,39 @@ Gravital.Game.prototype =
         // Create gas giants
         this.createGasPlanet(1100,400);
         
+        // Create special objects
+        this.createUFO(400,400,10,10,10,100);
+        
         // Add some text using a CSS style.
         // Center it in X, and position its top 15 pixels from the top of the world.
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
         this.text = this.game.add.text( this.game.world.centerX, 15, "Build something awesome.", style );
         this.text.anchor.setTo(0.5, 0.0);
+        
+        
+        // fullscreen support
+        
+        // Stretch to fill
+        this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+
+        // Keep original size
+        // game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
+
+        // Maintain aspect ratio
+        // game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+        this.game.input.onDown.add(this.gofull, this);
 	},
+    gofull: function()
+    {
+        if (this.game.scale.isFullScreen)
+            {
+                this.game.scale.stopFullScreen();
+            }
+        else
+            {
+                this.game.scale.startFullScreen(false);
+            } 
+    },
 	update: function()
 	{	
 		this.player.body.force.x = 0;
@@ -147,10 +178,12 @@ Gravital.Game.prototype =
 		this.updateAsteroids();
         this.updateComets();
         this.updateGasPlanets();
+        this.updateSpecialObjects();
         
         this.updatePlayer();
 		this.game.world.wrap(this.player.body, -50, false, true, true); //Make the world wrap around
 		
+        this.scaleAll();
         this.debugGame(); // Display some text with information
 	},
     
@@ -182,8 +215,6 @@ Gravital.Game.prototype =
 	},
 	updateComets: function()
 	{
-		
-        
         this.comets.forEachExists(this.updateComet,this);
 	},
 	updateComet: function(comet)
@@ -205,8 +236,6 @@ Gravital.Game.prototype =
 	updateGasPlanets: function()
 	{
         this.gasPlanets.forEach(this.updateGasPlanet,this, false);
-
-		
 	},
 	updateGasPlanet: function(gasPlanet)
 	{
@@ -215,6 +244,7 @@ Gravital.Game.prototype =
                 // Update emission rate of gas particles according to proximity to player
                 var distance = this.get_dist(this.player, gasPlanet);
                 distance -= gasPlanet.height/2;
+                distance -= this.player.height/2;
 
                 if(distance > 400) {
                     gasPlanet.timer.pause();
@@ -238,6 +268,32 @@ Gravital.Game.prototype =
 		this.applyGravity(gas, this.player);
 		this.checkBounds(gas);
 	},
+    updateSpecialObjects: function()
+    {
+        this.specialObjects.forEachExists(this.updateSpecialObject, this);
+    },
+    updateSpecialObject: function(sprite) {
+        this.applyGravity(this.player, sprite);
+        this.checkBounds(sprite);
+        switch(sprite.massType) {
+            case 'ufo':
+                {
+                var r2 = this.get_r2(sprite, this.player);
+                sprite.sound.volume = this.constrain(10000/r2, 0, 10);
+                }
+                break;
+            default:
+                break;
+        }
+    },
+    constrain: function(val, min, max) {
+        if(val < min) {
+            val = min;
+        } else if(val > max) {
+            val = max;
+        }
+        return val;
+    },
 	createAsteroid: function(x,y)
 	{
 		var asteroid = this.asteroids.create(x, y, 'asteroid');
@@ -245,7 +301,8 @@ Gravital.Game.prototype =
 		this.game.physics.p2.enable(asteroid);
         asteroid.massType = 'asteroid';
 		asteroid.body.density = this.enemyDensity;
-		this.newEnemy(asteroid);
+        asteroid.body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
+        this.updateSize(asteroid);
 		
 		var spin = asteroid.animations.add('spin');
 		asteroid.animations.play('spin', 30, true);
@@ -272,6 +329,7 @@ Gravital.Game.prototype =
         comet.massType = 'comet';
         comet.body.mass = 0.0001;
         comet.body.damping = 0;
+        comet.body.collideWorldBounds = false;
         comet.emitter = this.game.add.emitter(comet.x, comet.y, 300);
         comet.emitter.physicsBodyType = Phaser.Physics.P2; // Doesn't work for some reason, Phaser hasn't implemented yet
         comet.emitter.enableBody = true;
@@ -303,8 +361,8 @@ Gravital.Game.prototype =
         planet.massType = 'gasPlanet';
         
         this.game.physics.p2.enable(planet);
-        planet.body.mass = 200;
-        planet.body.density = .25;
+        planet.body.mass = 750;
+        planet.body.density = 40.0;
         
         planet.body.collideWorldBounds = false;
         
@@ -319,32 +377,31 @@ Gravital.Game.prototype =
         var numGasParticles = 300
         // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < numGasParticles; i++) {
-            var temp = planet.gas.create(500, 500, 'gasParticleOrange');
+            var gasParticle = planet.gas.create(500, 500, 'gasParticleOrange');
 
-            this.game.physics.p2.enable(temp);
-            temp.px1000 = this.getImageScale1000px(temp);
-            temp.massType = 'gasParticle';
+            this.game.physics.p2.enable(gasParticle);
+            gasParticle.px1000 = this.getImageScale1000px(gasParticle);
+            gasParticle.massType = 'gasParticle';
             
-            temp.body.mass = planet.body.mass/numGasParticles;
-            temp.body.density = planet.body.density * 4;
+            gasParticle.body.mass = planet.body.mass/numGasParticles;
+            gasParticle.body.density = planet.body.density;
             
-            //temp.body.setCircle(10);
-            this.updateSize(temp);
-            temp.body.setCollisionGroup(this.gasCollisionGroup);
-            //temp.scale.setTo(0.25);
-            temp.kill();
-            temp.body.collides(this.asteroidCollisionGroup);
-            temp.body.collideWorldBounds = false;
-            temp.body.damping = 0;
+            
+            this.updateSize(gasParticle);
+            gasParticle.body.setCollisionGroup(this.gasCollisionGroup);
            
-            //updateSize(temp); // ToDo: Tune gas mass and density so we can use this
-            //temp.body.massType = 'special';
-            temp.body.planetX = planet.x;
-            temp.body.planetY = planet.y;
+            gasParticle.kill();
+            gasParticle.body.collides(this.asteroidCollisionGroup);
+            gasParticle.body.collideWorldBounds = false;
+            gasParticle.body.damping = 0;
+           
+
+            gasParticle.body.planetX = planet.x;
+            gasParticle.body.planetY = planet.y;
             
-            var gasAnimation = temp.animations.add('gasAnimation');
-            temp.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
-            //temp.tint = 0xeeaa00;
+            var gasAnimation = gasParticle.animations.add('gasAnimation');
+            gasParticle.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
+            //temp.tint = 0xeeaa00;// Slooooow, edit image file
         }
         
         // Scale planet according to size and density
@@ -356,57 +413,92 @@ Gravital.Game.prototype =
         
         return planet;  
 	},
-    
+    createUFO: function(x, y, vx, vy, mass, density) {
+        
+        var ufo = this.game.add.sprite(x, y, 'UFO');
+        this.game.physics.p2.enable(ufo);
+        ufo.px1000 = this.getImageScale1000px(ufo);
+        ufo.massType = 'ufo';
+        
+        ufo.body.mass = mass;
+        ufo.body.density = density;
+        this.updateSize(ufo);
+        ufo.body.velocity.x = vx;
+        ufo.body.velocity.y = vy;
+        
+        ufo.sound = this.game.add.audio('SatteliteSound1');
+        ufo.sound.allowMultiple = false;
+        
+        // Timer for ufo noise
+        ufo.noiseTimer = this.game.time.create(true);
+        ufo.noiseTimer.loop(1000, function(){ufo.sound.play()}, this, ufo);
+        ufo.noiseTimer.start();
+        
+        // Add ufo to the specialObjects group
+        this.specialObjects.add(ufo);
+        
+        return ufo;
+    },
+    setupMass: function(sprite) {
+        this.game.physics.p2.enable(sprite);
+        sprite.px1000 = this.getImageScale1000px(sprite);
+        sprite.body.damping = 0;
+        sprite.collideWorldBounds = false;
+    },
 	emitGas: function(GasPlanet)
 	{
         if(GasPlanet.alive) {
             var nextgas = GasPlanet.gas.getFirstDead();
             if(nextgas) {
-                var angle = this.get_angle(this.player, GasPlanet);
+                var angle = this.get_angle(GasPlanet, this.player);
                 angle += this.game.rnd.frac() * 0.3 * this.game.rnd.integerInRange(-1,1);
-                nextgas.reset(GasPlanet.x + Math.cos(angle)*(GasPlanet.massRadius + nextgas.massRadius), GasPlanet.y + Math.sin(angle)*(GasPlanet.massRadius + nextgas.massRadius));
+                nextgas.reset(GasPlanet.x + Math.cos(angle) * (GasPlanet.height/2 - nextgas.height/2), GasPlanet.y + Math.sin(angle)*(GasPlanet.height/2 - nextgas.height/2));
+                nextgas.body.velocity.x = GasPlanet.body.velocity.x;
+                nextgas.body.velocity.y = GasPlanet.body.velocity.y;
 
                 nextgas.revive();
-
+                this.text.setText(GasPlanet.height + "," + this.player.height);
 
                 GasPlanet.body.mass -= nextgas.body.mass;
                 if(GasPlanet.body.mass <= 0) {
-                    GasPlanet.timer.stop();
-                    //this.gasPlanets.remove(GasPlanet);
-                    GasPlanet.kill();
-                    this.createGasPlanet(200,200);
-                    //GasPlanet.kill();
-
+                    this.resetGasPlanet(GasPlanet);
                 } else {
                     this.updateSize(GasPlanet);
                 }
-
-
             }
         }
 	},
+    resetGasPlanet: function(gasPlanet) {
+            gasPlanet.timer.stop();
+            gasPlanet.kill();
+            this.createGasPlanet(200,200);
+    },
 	absorbGas: function(body1, body2)
 	{
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
         body1.mass += body2.mass;
 		body2.sprite.kill();
 	},
 	absorbAsteroid: function(body1, body2)
 	{
-		this.sound.play('blip');
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
+		this.sound.play('asteroidHit');
         if(this.player.body.mass < 10000) {
             body1.mass += body2.mass; // Player absorbs mass
  
         }
+        
         this.updateSize(body1.sprite); // Player grows
-        this.resetBody(body2); // Reset the mass that was absorbed
+        this.resetAsteroid(body2); // Reset the mass that was absorbed
 	},
-    absorbGasPlanet: function(GasPlanet, player) {
-//        if() {
-//            
-//        } else {
-            //this.music.stop();
+    absorbGasPlanet: function(playerBody, gasPlanetBody) {
+        if(playerBody.sprite.height >= gasPlanetBody.sprite.height) {
+            playerBody.mass += gasPlanetBody.mass;
+            this.resetGasPlanet(gasPlanetBody.sprite);
+        } else {
+            this.music.stop();
             //this.game.state.start('MainMenu');
-//        }
+        }
     },
     gameOver: function() {
         
@@ -414,15 +506,29 @@ Gravital.Game.prototype =
     fadingText(x, y, height, duration) {
         
     },
+    scaleAll: function() {
+        this.globalScaleFactor = 10/Math.sqrt(this.player.body.mass);
+        this.asteroids.forEach(this.updateSize, this, false);
+        this.gasPlanets.forEach(
+            function(gasPlanet) {
+                gasPlanet.gas.forEach(this.updateSize, this, false);
+                this.updateSize(gasPlanet)
+            }, this, false);
+        this.comets.forEach(this.updateSize, this, false);
+        this.updateSize(this.player);
+    },
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
 		scaleFactor = Math.cbrt(scaleFactor);
         scaleFactor *= 0.1;
-        sprite.massRadius = sprite.px1000 * scaleFactor;
-        
-        sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density
+        scaleFactor *= this.globalScaleFactor;
+
+    
+        sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density 10
+        sprite.massRadius = sprite.height/2;
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
+        
         switch(sprite.massType) {
                 
             case 'asteroid':
@@ -446,6 +552,8 @@ Gravital.Game.prototype =
         sprite.scale.setTo(1);
         return 1000.0 / sprite.height;  
     },
+    
+    //Wrap world boundaries for sprite
 	checkBounds: function (sprite) 
 	{
         if(sprite.body.x < 0 - this.worldBuffer) {
@@ -460,7 +568,7 @@ Gravital.Game.prototype =
             sprite.body.y = 0 - this.worldBuffer;
         } 
     },
-	resetBody: function (body) 
+	resetAsteroid: function (body) 
 	{
 
         var side = this.game.rnd.integerInRange(1,4);
@@ -486,16 +594,22 @@ Gravital.Game.prototype =
         }
 
         body.reset(newX, newY); // Put the sprite there
-        this.newEnemy(body.sprite); // Give the sprite a new mass / size
+        // Give the sprite a new mass / size
+        body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
+        this.updateSize(body.sprite);
     },
-	
-	// This will spawn new enemies according to the context of the game
-    // Enemy types might be asteroids, planets, moons, stars, comets, dust, or black holes
-    // The likleyhood of each type of enemy spawning could be set to tune gameplay experience
-    newEnemy: function (sprite) 
-	{
-        sprite.body.mass = 5 * this.game.rnd.frac() * this.player.body.mass/this.numAsteroids;
-        this.updateSize(sprite);
+    animateText(x, y, text) {
+        var animatedText;
+        var style = { font: "18px Verdana", fill: "#ffffff", align: "center" };
+        animatedText = this.game.add.text( x, y, 100, style );
+        animatedText.anchor.setTo(0.5, 0.5);
+        animatedText.setText(text);
+        animatedText.x = x;
+        animatedText.y = y;
+        animatedText.alpha = 1;
+        this.game.time.events.add(0, function() {
+            this.game.add.tween(animatedText).to({y: y - 30}, 500, Phaser.Easing.Linear.None, true);    this.game.add.tween(animatedText).to({alpha: 0}, 500, Phaser.Easing.Linear.None, true);
+        }, this); 
     },
 	
 	applyGravity: function (sprite1, sprite2) 
@@ -517,12 +631,12 @@ Gravital.Game.prototype =
 	},
 	debugGame: function () 
 	{
-        this.text.setText("\
-                        player.mass: " 
-                    + this.player.body.mass.toFixed(4)
-                    + "\nplayer.radius: "
-                    + this.player.height/2
-                    + "\nx: " + this.player.x + " y: " + this.debugText);
+//        this.text.setText("\
+//                        player.mass: " 
+//                    + this.player.body.mass.toFixed(4)
+//                    + "\nplayer.radius: "
+//                    + this.player.height/2
+//                    + "\nx: " + this.player.x + " y: " + this.debugText);
         this.text.x = this.game.camera.x + this.text.width;
         this.text.y = this.game.camera.y + this.game.camera.height - this.text.height;
     },
@@ -540,7 +654,7 @@ Gravital.Game.prototype =
     },
 	
 	get_dist: function (object1, object2) {
-        return Math.sqrt(this.get_r2(object1, object2));
+        return Math.sqrt(this.get_r2(object1, object2)) / this.globalScaleFactor;
     },
     
 	// This will constrain the acceleration on an object to a maximum magnitude
@@ -580,9 +694,5 @@ Gravital.Game.prototype =
         } else if(force_y < -this.force_max) {
             object.body.force.y = -this.force_max;
         }
-    }
-	
-	
-	
-	
+    }	
 };
