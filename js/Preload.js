@@ -27,6 +27,7 @@ Gravital.Preload.prototype =
         this.load.image('cometDust', 'assets/img/cometDust.png');
         this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         this.load.audio('asteroidHit', 'assets/audio/Hit1.ogg');
+        this.load.audio('SatteliteSound1', 'assets/audio/SatteliteSound1.ogg')
 	},
 	create: function() 
 	{
