@@ -41,6 +41,9 @@ Gravital.Game.prototype =
         this.specialObjects;
         this.specialCollisionGroup;
         
+        this.blackHoles;
+        this.blackHoleCollisionGroup;
+        
         this.asteroidDensity = 1.0;
         this.cometDensity = 1.5;
         this.gasDensity = 0.25;
@@ -78,6 +81,10 @@ Gravital.Game.prototype =
         this.gasCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.gasPlanetCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.cometCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.satelliteCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.blackHoleCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.ufoCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        
         this.game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
         this.game.physics.p2.setImpactEvents(true);
         
@@ -85,6 +92,7 @@ Gravital.Game.prototype =
         this.comets = this.game.add.group();
         this.asteroids = this.game.add.group();
         this.specialObjects = this.game.add.group();
+        this.blackHoles = this.game.add.group();
         
         // Create a sprite at the center of the screen using the 'logo' image.
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'asteroid' );
@@ -93,14 +101,14 @@ Gravital.Game.prototype =
         
         // Camera will follow player around the playable area
         this.game.camera.follow(this.player);
-        this.game.camera.deadzone = new Phaser.Rectangle(100, 100, 800, 400);
+        this.game.camera.deadzone = new Phaser.Rectangle(250, 250, 400, 100);
         
         // P2 physics suits all masses
         this.game.physics.p2.enable(this.player); 
-        this.player.body.x = 800;
-        this.player.body.y = 800;
-		this.player.x = 800;
-        this.player.y = 800;
+        this.player.body.x = 1500;
+        this.player.body.y = 1500;
+		this.player.x = 1500;
+        this.player.y = 1500;
         
         // Initialize relative physical parameters of the player
         this.player.body.mass = this.playerStartMass;
@@ -139,7 +147,10 @@ Gravital.Game.prototype =
         this.createGasPlanet(1100,400);
         
         // Create special objects
-        this.createUFO(400,400,10,10,10,100);
+        this.createUFO(400,400,10,10,500,500);
+        
+        // Create black holes
+        this.createBlackHole(400, 800, 0, 0, 1000, 3000);
         
         // Add some text using a CSS style.
         // Center it in X, and position its top 15 pixels from the top of the world.
@@ -179,6 +190,7 @@ Gravital.Game.prototype =
         this.updateComets();
         this.updateGasPlanets();
         this.updateSpecialObjects();
+        this.updateBlackHoles();
         
         this.updatePlayer();
 		this.game.world.wrap(this.player.body, -50, false, true, true); //Make the world wrap around
@@ -278,13 +290,22 @@ Gravital.Game.prototype =
         switch(sprite.massType) {
             case 'ufo':
                 {
-                var r2 = this.get_r2(sprite, this.player);
-                sprite.sound.volume = this.constrain(10000/r2, 0, 10);
+                var r2 = this.get_dist(sprite, this.player);
+                sprite.sound.volume = this.constrain(200/r2, 0, 10);
                 }
                 break;
             default:
                 break;
         }
+    },
+    updateBlackHoles: function()
+    {
+        this.blackHoles.forEachExists(this.updateBlackHole, this);   
+    },
+    updateBlackHole: function(blackHole)
+    {
+        this.applyGravity(blackHole, this.player);
+        this.checkBounds(blackHole);
     },
     constrain: function(val, min, max) {
         if(val < min) {
@@ -424,6 +445,8 @@ Gravital.Game.prototype =
         blackHole.body.density = density;
         blackHole.body.velocity.x = vx;
         blackHole.body.velocity.y = vy;
+        blackHole.body.angularDamping = 0;
+        blackHole.body.angularVelocity = 1;
         
         blackHole.px1000 = this.getImageScale1000px(blackHole);
         this.updateSize(blackHole);
@@ -439,6 +462,7 @@ Gravital.Game.prototype =
         this.game.physics.p2.enable(ufo);
         ufo.collideWorldBounds = false;
         ufo.px1000 = this.getImageScale1000px(ufo);
+        
         ufo.massType = 'ufo';
         
         ufo.body.mass = mass;
@@ -446,6 +470,9 @@ Gravital.Game.prototype =
         this.updateSize(ufo);
         ufo.body.velocity.x = vx;
         ufo.body.velocity.y = vy;
+        
+        ufo.body.angularDamping = 0;
+        ufo.body.angularVelocity = 0.5;
         
         ufo.sound = this.game.add.audio('SatelliteSound1');
         ufo.sound.allowMultiple = false;
