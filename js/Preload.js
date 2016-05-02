@@ -21,13 +21,14 @@ Gravital.Preload.prototype =
 		this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         this.load.spritesheet('asteroid', 'assets/img/asteroid_sprite_sheet.png', 128, 128, 32);
         this.load.spritesheet('gasParticleOrange', 'assets/img/GasParticleSpriteSheetOrange.png', 256, 255.8, 30);
+        this.load.spritesheet('Satellite1', 'assets/img/Satellite1.png', 160, 160, 36);
         this.load.image('ball', 'assets/img/planet2.png');
         this.load.image('space', 'assets/img/SPACE.jpg');
         this.load.image('comet', 'assets/img/comet.png');
         this.load.image('cometDust', 'assets/img/cometDust.png');
         this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         this.load.audio('asteroidHit', 'assets/audio/Hit1.ogg');
-        this.load.audio('SatteliteSound1', 'assets/audio/SatteliteSound1.ogg')
+        this.load.audio('SatelliteSound1', 'assets/audio/SatelliteSound1.ogg')
 	},
 	create: function() 
 	{
