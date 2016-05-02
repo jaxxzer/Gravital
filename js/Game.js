@@ -276,8 +276,8 @@ Gravital.Game.prototype =
         switch(sprite.massType) {
             case 'ufo':
                 {
-                var distance = this.get_dist(sprite, this.player);
-                sprite.sound.volume = this.constrain(1000/distance, 0, 10);
+                var r2 = this.get_r2(sprite, this.player);
+                sprite.sound.volume = this.constrain(10000/r2, 0, 10);
                 }
                 break;
             default:
@@ -485,7 +485,11 @@ Gravital.Game.prototype =
             body1.mass += body2.mass; // Player absorbs mass
  
         }
+        
         this.updateSize(body1.sprite); // Player grows
+        
+        this.game.stage.scale.x = 0.1;
+        this.game.stage.scale.y = 0.1;
         this.resetAsteroid(body2); // Reset the mass that was absorbed
 	},
     absorbGasPlanet: function(playerBody, gasPlanetBody) {
@@ -504,14 +508,14 @@ Gravital.Game.prototype =
         
     },
     scaleAll: function(scaleFactor) {
-        
+        this.masses.forEach(this.updateSize);
     },
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
 		scaleFactor = Math.cbrt(scaleFactor);
         scaleFactor *= 0.1;
-        //scaleFactor *= 10 / Math.sqrt(this.player.body.mass);
+
     
         sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density 10
         sprite.massRadius = sprite.height/2;

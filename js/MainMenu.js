@@ -21,7 +21,7 @@ Gravital.MainMenu.prototype =
 		this.game.physics.startSystem(Phaser.Physics.P2JS);
 		
 		// show game start text
-		var text = "Tap for tutorial";
+		var text = "Click for tutorial";
 		var style = { font: "30px Arial", fill: "#fff", align: "center" };
 		var t = this.game.add.text(this.game.width/2, this.game.height/2, text, style);
 		t.anchor.set(0.5);
