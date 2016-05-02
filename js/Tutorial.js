@@ -52,10 +52,10 @@ Gravital.Tutorial.prototype =
 		
 		
 		// show game start text
-		var text = "Tap to start";
+		var text = "Tap to start, then click for fullscreen, click again to exit fullscreen";
 		var style = { font: "30px Arial", fill: "#fff", align: "center" };
 		var t = this.game.add.text(this.game.width/2, this.game.height-30, text, style);
-		t.anchor.set(0.5);		
+		t.anchor.set(0.5);
 		
 	},
 	gasemit: function() 

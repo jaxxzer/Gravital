@@ -145,7 +145,31 @@ Gravital.Game.prototype =
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
         this.text = this.game.add.text( this.game.world.centerX, 15, "Build something awesome.", style );
         this.text.anchor.setTo(0.5, 0.0);
+        
+        
+        // fullscreen support
+        
+        // Stretch to fill
+        this.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+
+        // Keep original size
+        // game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
+
+        // Maintain aspect ratio
+        // game.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+        this.game.input.onDown.add(this.gofull, this);
 	},
+    gofull: function()
+    {
+        if (this.game.scale.isFullScreen)
+            {
+                this.game.scale.stopFullScreen();
+            }
+        else
+            {
+                this.game.scale.startFullScreen(false);
+            } 
+    },
 	update: function()
 	{	
 		this.player.body.force.x = 0;
