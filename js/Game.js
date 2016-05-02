@@ -53,14 +53,15 @@ Gravital.Game.prototype =
 		
 		this.sound;
 		
-		
+		this.globalScaleFactor = 1;
 		
 		// actual "Create"
 		// Play music
         this.music = this.add.audio('soundtrack1');
         this.music.play();
         
-		this.tilesprite = this.game.add.tileSprite(0,0,2000, 2000, 'space');
+		this.tilesprite = this.game.add.tileSprite(0,0,4000, 4000, 'space');
+        this.tilesprite.scale.setTo(1, 1);
         
         // Create sound sprite for blip noise
     	this.sound = this.game.add.audio('asteroidHit');
@@ -182,6 +183,7 @@ Gravital.Game.prototype =
         this.updatePlayer();
 		this.game.world.wrap(this.player.body, -50, false, true, true); //Make the world wrap around
 		
+        this.scaleAll();
         this.debugGame(); // Display some text with information
 	},
     
@@ -487,9 +489,6 @@ Gravital.Game.prototype =
         }
         
         this.updateSize(body1.sprite); // Player grows
-        
-        this.game.stage.scale.x = 0.1;
-        this.game.stage.scale.y = 0.1;
         this.resetAsteroid(body2); // Reset the mass that was absorbed
 	},
     absorbGasPlanet: function(playerBody, gasPlanetBody) {
@@ -498,7 +497,7 @@ Gravital.Game.prototype =
             this.resetGasPlanet(gasPlanetBody.sprite);
         } else {
             this.music.stop();
-            this.game.state.start('MainMenu');
+            //this.game.state.start('MainMenu');
         }
     },
     gameOver: function() {
@@ -507,14 +506,23 @@ Gravital.Game.prototype =
     fadingText(x, y, height, duration) {
         
     },
-    scaleAll: function(scaleFactor) {
-        this.masses.forEach(this.updateSize);
+    scaleAll: function() {
+        this.globalScaleFactor = 10/Math.sqrt(this.player.body.mass);
+        this.asteroids.forEach(this.updateSize, this, false);
+        this.gasPlanets.forEach(
+            function(gasPlanet) {
+                gasPlanet.gas.forEach(this.updateSize, this, false);
+                this.updateSize(gasPlanet)
+            }, this, false);
+        this.comets.forEach(this.updateSize, this, false);
+        this.updateSize(this.player);
     },
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
 		scaleFactor = Math.cbrt(scaleFactor);
         scaleFactor *= 0.1;
+        scaleFactor *= this.globalScaleFactor;
 
     
         sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density 10
@@ -646,7 +654,7 @@ Gravital.Game.prototype =
     },
 	
 	get_dist: function (object1, object2) {
-        return Math.sqrt(this.get_r2(object1, object2));
+        return Math.sqrt(this.get_r2(object1, object2)) / this.globalScaleFactor;
     },
     
 	// This will constrain the acceleration on an object to a maximum magnitude
