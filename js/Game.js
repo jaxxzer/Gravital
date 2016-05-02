@@ -17,7 +17,7 @@ Gravital.Game.prototype =
 //        spriteTest2.px1000 = this.getImageScale1000px(spriteTest2);
 //        spriteTest2.scale.setTo(spriteTest1.px1000*0.5);
         
-        
+        //this.game.stage.scale.startFullScreen();
 		this.player;
 		this.text; // Debug text
 		
@@ -87,6 +87,7 @@ Gravital.Game.prototype =
         
         // Create a sprite at the center of the screen using the 'logo' image.
         this.player = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'asteroid' );
+        this.player.massType = 'asteroid';
         this.player.px1000 = this.getImageScale1000px(this.player);
         
         // Camera will follow player around the playable area
@@ -350,32 +351,31 @@ Gravital.Game.prototype =
         var numGasParticles = 300
         // Create the gas particles (they won't be emitted until player is close enough)
         for(var i = 0; i < numGasParticles; i++) {
-            var temp = planet.gas.create(500, 500, 'gasParticleOrange');
+            var gasParticle = planet.gas.create(500, 500, 'gasParticleOrange');
 
-            this.game.physics.p2.enable(temp);
-            temp.px1000 = this.getImageScale1000px(temp);
-            temp.massType = 'gasParticle';
+            this.game.physics.p2.enable(gasParticle);
+            gasParticle.px1000 = this.getImageScale1000px(gasParticle);
+            gasParticle.massType = 'gasParticle';
             
-            temp.body.mass = planet.body.mass/numGasParticles;
-            temp.body.density = planet.body.density;
+            gasParticle.body.mass = planet.body.mass/numGasParticles;
+            gasParticle.body.density = planet.body.density;
             
-            //temp.body.setCircle(10);
-            this.updateSize(temp);
-            temp.body.setCollisionGroup(this.gasCollisionGroup);
-            //temp.scale.setTo(0.25);
-            temp.kill();
-            temp.body.collides(this.asteroidCollisionGroup);
-            temp.body.collideWorldBounds = false;
-            temp.body.damping = 0;
+            
+            this.updateSize(gasParticle);
+            gasParticle.body.setCollisionGroup(this.gasCollisionGroup);
            
-            //updateSize(temp); // ToDo: Tune gas mass and density so we can use this
-            //temp.body.massType = 'special';
-            temp.body.planetX = planet.x;
-            temp.body.planetY = planet.y;
+            gasParticle.kill();
+            gasParticle.body.collides(this.asteroidCollisionGroup);
+            gasParticle.body.collideWorldBounds = false;
+            gasParticle.body.damping = 0;
+           
+
+            gasParticle.body.planetX = planet.x;
+            gasParticle.body.planetY = planet.y;
             
-            var gasAnimation = temp.animations.add('gasAnimation');
-            temp.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
-            //temp.tint = 0xeeaa00;
+            var gasAnimation = gasParticle.animations.add('gasAnimation');
+            gasParticle.animations.play('gasAnimation', this.game.rnd.integerInRange(5,25), true);
+            //temp.tint = 0xeeaa00;// Slooooow, edit image file
         }
         
         // Scale planet according to size and density
@@ -479,6 +479,9 @@ Gravital.Game.prototype =
     fadingText(x, y, height, duration) {
         
     },
+    scaleAll: function(scaleFactor) {
+        
+    },
 	updateSize: function(sprite) 
 	{
 		var scaleFactor = sprite.body.mass/sprite.body.density;
@@ -489,6 +492,7 @@ Gravital.Game.prototype =
         sprite.scale.setTo(sprite.px1000 * scaleFactor); // Update size based on mass and density 10
         sprite.massRadius = sprite.height/2;
         sprite.body.setCircle(sprite.height/3); // Create new body to fit new size
+        
         switch(sprite.massType) {
                 
             case 'asteroid':
