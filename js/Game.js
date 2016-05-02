@@ -327,7 +327,8 @@ Gravital.Game.prototype =
         this.game.physics.p2.enable(comet);
         comet.body.setCollisionGroup(this.cometCollisionGroup);
         comet.massType = 'comet';
-        comet.body.mass = 0.0001;
+        comet.body.mass = 5;
+        comet.body.density = 100;
         comet.body.damping = 0;
         comet.body.collideWorldBounds = false;
         comet.emitter = this.game.add.emitter(comet.x, comet.y, 300);
@@ -413,10 +414,30 @@ Gravital.Game.prototype =
         
         return planet;  
 	},
+    createBlackHole: function(x, y, vx, vy, mass, density) {
+        var blackHole = this.game.add.sprite(x, y, 'BlackHole');
+        this.game.physics.p2.enable(blackHole);
+        
+        blackHole.collideWorldBounds = false;
+        blackHole.massType = 'blackHole';
+        blackHole.body.mass = mass;
+        blackHole.body.density = density;
+        blackHole.body.velocity.x = vx;
+        blackHole.body.velocity.y = vy;
+        
+        blackHole.px1000 = this.getImageScale1000px(blackHole);
+        this.updateSize(blackHole);
+        
+        this.blackHoles.add(blackHole);
+        return blackHole;
+    },
     createUFO: function(x, y, vx, vy, mass, density) {
         
-        var ufo = this.game.add.sprite(x, y, 'UFO');
+        var ufo = this.game.add.sprite(x, y, 'Satellite1');
+        ufo.animations.add('spin');
+        ufo.animations.play('spin', 15, true);
         this.game.physics.p2.enable(ufo);
+        ufo.collideWorldBounds = false;
         ufo.px1000 = this.getImageScale1000px(ufo);
         ufo.massType = 'ufo';
         
@@ -426,7 +447,7 @@ Gravital.Game.prototype =
         ufo.body.velocity.x = vx;
         ufo.body.velocity.y = vy;
         
-        ufo.sound = this.game.add.audio('SatteliteSound1');
+        ufo.sound = this.game.add.audio('SatelliteSound1');
         ufo.sound.allowMultiple = false;
         
         // Timer for ufo noise
