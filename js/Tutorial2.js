@@ -37,7 +37,7 @@ Gravital.Tutorial2.prototype =
         // UFO
         var ufo = this.game.add.sprite(70, this.game.height-190, 'UFO');
   	
-		var utext = "This is a ufo, they're crazy. They will teleport you if you make contact."
+		var utext = "This is a ufo, they're crazy. They are not affected by gravity,\n and they will teleport you if you make contact."
 		var ustyle = { font: "20px Arial", fill: "#fff", align: "left" };
 		var ut = this.game.add.text(490, this.game.height-140, utext, ustyle);
 		ut.anchor.set(0.5);

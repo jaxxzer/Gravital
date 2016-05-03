@@ -31,7 +31,7 @@ Gravital.Preload.prototype =
         this.load.audio('soundtrack1', 'assets/audio/Ital Tek - Strangelove VIP.ogg');
         this.load.audio('asteroidHit', 'assets/audio/Hit1.ogg');
         this.load.audio('SatelliteSound1', 'assets/audio/SatelliteSound1.ogg');
-        this.load.audio('UFOSound1', 'assets/audio/AlienSound1');
+        this.load.audio('UFOSound1', 'assets/audio/AlienSound1.ogg');
 	},
 	create: function() 
 	{

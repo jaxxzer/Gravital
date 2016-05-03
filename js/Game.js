@@ -111,12 +111,13 @@ Gravital.Game.prototype =
         this.player.body.damping = 0;
         
         // Enable collisions between the player and children of asteroidCollisionGroup
-        this.player.body.collides([this.asteroidCollisionGroup, this.gasCollisionGroup, this.gasPlanetCollisionGroup]);
+        this.player.body.collides([this.asteroidCollisionGroup, this.gasCollisionGroup, this.gasPlanetCollisionGroup, this.ufoCollisionGroup]);
         
         // Set the callback method when player collides with another mass
         this.player.body.createGroupCallback(this.asteroidCollisionGroup, this.absorbAsteroid, this);
         this.player.body.createGroupCallback(this.gasCollisionGroup, this.absorbGas, this);
         this.player.body.createGroupCallback(this.gasPlanetCollisionGroup, this.absorbGasPlanet, this);
+        this.player.body.createGroupCallback(this.ufoCollisionGroup, this.ufoCollide, this);
         
         // Animate the player sprite
         var spin = this.player.animations.add('spin');
@@ -145,7 +146,8 @@ Gravital.Game.prototype =
         this.createGasPlanet(1100,400);
         
         // Create special objects
-        this.createSatellite(400,400,10,10,500,500);
+        this.createSatellite(400,400,65,65,500,500);
+        this.createUFO(1200, 1200, -80, -80, 300, 500);
         
         // Create black holes
         this.createBlackHole(400, 800, 0, 0, 1000, 3000);
@@ -292,18 +294,25 @@ Gravital.Game.prototype =
         this.specialObjects.forEachExists(this.updateSpecialObject, this);
     },
     updateSpecialObject: function(sprite) {
-        this.applyGravity(this.player, sprite);
-        this.checkBounds(sprite);
+        
         switch(sprite.massType) {
-            case 'ufo':
+            case 'sat':
                 {
                 var r2 = this.get_dist(sprite, this.player);
                 sprite.sound.volume = this.constrain(200/r2, 0, 10);
+                this.applyGravity(this.player, sprite);
+                }
+                break;
+            case 'ufo':
+                {
+                sprite.body.rotation = Math.atan2(sprite.body.velocity.y, sprite.body.velocity.x);  
                 }
                 break;
             default:
                 break;
         }
+        
+        this.checkBounds(sprite);
     },
     updateBlackHoles: function()
     {
@@ -392,7 +401,9 @@ Gravital.Game.prototype =
         this.game.physics.p2.enable(planet);
         planet.body.mass = 750;
         planet.body.density = 40.0;
-        
+        planet.body.damping = 0;
+        planet.body.angularDamping = 0;
+        planet.body.angularVelocity = -0.2;
         planet.body.collideWorldBounds = false;
         
         
@@ -463,9 +474,41 @@ Gravital.Game.prototype =
     },
     createSatellite: function(x, y, vx, vy, mass, density) {
         
-        var ufo = this.game.add.sprite(x, y, 'Satellite1');
-        ufo.animations.add('spin');
-        ufo.animations.play('spin', 15, true);
+        var sat = this.game.add.sprite(x, y, 'Satellite1');
+        sat.animations.add('spin');
+        sat.animations.play('spin', 15, true);
+        this.game.physics.p2.enable(sat);
+        sat.collideWorldBounds = false;
+        sat.px1000 = this.getImageScale1000px(sat);
+        
+        sat.massType = 'sat';
+        
+        sat.body.mass = mass;
+        sat.body.density = density;
+        sat.body.damping = 0;
+        this.updateSize(sat);
+        sat.body.velocity.x = vx;
+        sat.body.velocity.y = vy;
+        
+        sat.body.angularDamping = 0;
+        sat.body.angularVelocity = 0.5;
+        
+        sat.sound = this.game.add.audio('SatelliteSound1');
+        sat.sound.allowMultiple = false;
+        
+        // Timer for sat noise
+        sat.noiseTimer = this.game.time.create(true);
+        sat.noiseTimer.loop(1000, function(){sat.sound.play();}, this, sat);
+        sat.noiseTimer.start();
+        
+        // Add sat to the specialObjects group
+        this.specialObjects.add(sat);
+        
+        return sat;
+    },
+    createUFO: function(x, y, vx, vy, mass, density) {
+        var ufo = this.game.add.sprite(x, y, 'UFO');
+
         this.game.physics.p2.enable(ufo);
         ufo.collideWorldBounds = false;
         ufo.px1000 = this.getImageScale1000px(ufo);
@@ -474,27 +517,37 @@ Gravital.Game.prototype =
         
         ufo.body.mass = mass;
         ufo.body.density = density;
+        ufo.body.damping = 0;
         this.updateSize(ufo);
         ufo.body.velocity.x = vx;
         ufo.body.velocity.y = vy;
         
         ufo.body.angularDamping = 0;
-        ufo.body.angularVelocity = 0.5;
         
-        ufo.sound = this.game.add.audio('SatelliteSound1');
+        ufo.sound = this.game.add.audio('UFOSound1');
         ufo.sound.allowMultiple = false;
         
-        // Timer for ufo noise
-        ufo.noiseTimer = this.game.time.create(true);
-        ufo.noiseTimer.loop(1000, function(){ufo.sound.play()}, this, ufo);
-        ufo.noiseTimer.start();
-        
+        // Timer for ufo movement
+        ufo.moveTimer = this.game.time.create(true);
+        ufo.moveTimer.loop(750, 
+            function() {
+                ufo.body.velocity.x = this.game.rnd.integerInRange(-1000,1000);
+                ufo.body.velocity.y = this.game.rnd.integerInRange(-1000,1000);
+            },
+            this, ufo);
+        ufo.moveTimer.start();
+        ufo.body.setCollisionGroup(this.ufoCollisionGroup);
+        ufo.body.collides(this.asteroidCollisionGroup);
         // Add ufo to the specialObjects group
         this.specialObjects.add(ufo);
         
         return ufo;
     },
-    
+    ufoCollide: function(playerBody, ufoBody) {
+        playerBody.x = this.game.rnd.integerInRange(0, this.game.world.width);
+        playerBody.y = this.game.rnd.integerInRange(0, this.game.world.height);
+        ufoBody.sprite.sound.play();
+    },
     setupMass: function(sprite) {
         this.game.physics.p2.enable(sprite);
         sprite.px1000 = this.getImageScale1000px(sprite);
@@ -600,6 +653,9 @@ Gravital.Game.prototype =
                 break;
             case 'gasParticle':
                 sprite.body.setCollisionGroup(this.gasCollisionGroup);
+                break;
+            case 'ufo':
+                sprite.body.setCollisionGroup(this.ufoCollisionGroup);
                 break;
             default:
                 sprite.body.setCollisionGroup(this.asteroidCollisionGroup);
