@@ -21,10 +21,16 @@ Gravital.MainMenu.prototype =
 		this.game.physics.startSystem(Phaser.Physics.P2JS);
 		
 		// show game start text
-		var text = "Click for tutorial";
-		var style = { font: "30px Arial", fill: "#fff", align: "center" };
-		var t = this.game.add.text(this.game.width/2, this.game.height/2, text, style);
-		t.anchor.set(0.5);
+		//var text = "Click for tutorial";
+		//var style = { font: "30px Arial", fill: "#fff", align: "center" };
+		//var t = this.game.add.text(this.game.width/2, this.game.height/2, text, style);
+		//t.anchor.set(0.5);
+		
+		//Put in buttons
+		var sbutton = this.game.add.button(this.game.width/2-100,this.game.height/2-100,'startbutton', this.startgame, this, 2, 1, 0);
+		var tbutton = this.game.add.button(this.game.width/2-100,this.game.height/2+100,'tutorialbutton', this.starttut, this, 2, 1, 0);
+		
+		
 		
 		//highest score
 		//text = "Highest score: "+this.highestScore;
@@ -49,6 +55,12 @@ Gravital.MainMenu.prototype =
 		
         
 		
+	},
+	startgame: function(){
+		this.game.state.start('Game');
+	},
+	starttut: function(){
+		this.game.state.start('Tutorial');
 	},
 	createAsteroid: function(x,y)
 	{
@@ -135,10 +147,10 @@ Gravital.MainMenu.prototype =
 	},
 	update: function() 
 	{
-		if (this.game.input.activePointer.justPressed())
-		{
-			this.game.state.start('Tutorial');
-		}
+		// if (this.game.input.activePointer.justPressed())
+// 		{
+// 			this.game.state.start('Tutorial');
+// 		}
 		
         this.updateComets();
 	}
