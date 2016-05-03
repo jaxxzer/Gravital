@@ -142,11 +142,15 @@ Gravital.Game.prototype =
         comet3.body.velocity.x = -1800;
         comet3.body.velocity.y = 1900;
         
+        var comet4 = this.createComet(3250, 8600);
+        comet3.body.velocity.x = -500;
+        comet3.body.velocity.y = 1900;
+        
         // Create gas giants
         this.createGasPlanet(1100,400);
         
         // Create special objects
-        this.createSatellite(1000,800,-120,-120,500,500);
+        this.createSatellite(1000,800,-120,-120,50,50);
         this.createUFO(1200, 1200, -80, -80, 300, 500);
         
         // Create black holes
