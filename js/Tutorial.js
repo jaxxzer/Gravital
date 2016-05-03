@@ -45,14 +45,14 @@ Gravital.Tutorial.prototype =
 		com.emitter.start(false, 1000, 10);
 		
 		//Commet text
-		var ctext = "This is a comet. You can absorb it, too.\nIt leaves residue as it flies."
+		var ctext = "This is a comet. You can absorb it, too.\nIt travels at high velocity and leaves behind small dust as it travels."
 		var cstyle = { font: "20px Arial", fill: "#fff", align: "left" };
-		var ct = this.game.add.text(360, this.game.height-140, ctext, cstyle);
+		var ct = this.game.add.text(475, this.game.height-140, ctext, cstyle);
 		ct.anchor.set(0.5);	
 		
 		
 		// show game start text
-		var text = "Tap to start, then click for fullscreen, click again to exit fullscreen";
+		var text = "Click for next tutorial screen.";
 		var style = { font: "30px Arial", fill: "#fff", align: "center" };
 		var t = this.game.add.text(this.game.width/2, this.game.height-30, text, style);
 		t.anchor.set(0.5);
@@ -70,7 +70,7 @@ Gravital.Tutorial.prototype =
 		//Start the game!
 		if (this.game.input.activePointer.justPressed())
 		{
-			this.game.state.start('Game');
+			this.game.state.start('Tutorial2');
 		}
 		
 	}
