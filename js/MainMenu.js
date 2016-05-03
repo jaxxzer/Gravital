@@ -44,15 +44,16 @@ Gravital.MainMenu.prototype =
         this.gasCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.gasPlanetCollisionGroup = this.game.physics.p2.createCollisionGroup();
         this.cometCollisionGroup = this.game.physics.p2.createCollisionGroup();
-        this.satelliteCollisionGroup = this.game.physics.p2.createCollisionGroup();
-        this.blackHoleCollisionGroup = this.game.physics.p2.createCollisionGroup();
-        this.ufoCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        //this.satelliteCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        //this.blackHoleCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        //this.ufoCollisionGroup = this.game.physics.p2.createCollisionGroup();
         
          
         this.game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
         this.game.physics.p2.setImpactEvents(true);
         
-		 this.comets = this.game.add.group();
+        this.gasPlanets = this.game.add.group();
+        this.comets = this.game.add.group();
         this.asteroids = this.game.add.group();
         
        
@@ -66,7 +67,7 @@ Gravital.MainMenu.prototype =
 		{
 			this.createComet(this.game.rnd.integerInRange(0,this.game.world.width), this.game.rnd.integerInRange(0,this.game.world.height));
 		}
-        
+        this.createGasPlanet(1100,400);
 		
 	},
 	createAsteroid: function(x,y)
@@ -152,6 +153,18 @@ Gravital.MainMenu.prototype =
             
             //this.applyGravity(comet, this.player); // Gravity
             //this.checkBounds(comet); // Wrap around game boundaries
+	},
+    createGasPlanet: function(x,y)
+	{
+		var planet = this.game.add.sprite(x,y, 'ball');
+        planet.px1000 = this.getImageScale1000px(planet);
+        planet.anchor.setTo(0.5);
+        planet.scale.setTo(2);
+        planet.massType = 'gasPlanet';
+        
+        
+        
+        return planet;  
 	},
     updateAsteroids: function()
 	{
