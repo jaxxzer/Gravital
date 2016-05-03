@@ -63,7 +63,7 @@ Gravital.MainMenu.prototype =
         }
 		
 		this.comets = this.game.add.group();
-		for (var i = 0; i <3; i ++)
+		for (var i = 0; i <2; i ++)
 		{
 			this.createComet(this.game.rnd.integerInRange(0,this.game.world.width), this.game.rnd.integerInRange(0,this.game.world.height));
 		}
@@ -123,8 +123,8 @@ Gravital.MainMenu.prototype =
         comet.exists = true;
 		
 		
-        comet.body.velocity.x = this.game.rnd.integerInRange(-450,450);
-        comet.body.velocity.y = this.game.rnd.integerInRange(-450,450);
+        comet.body.velocity.x = this.game.rnd.integerInRange(-1000,1000);
+        comet.body.velocity.y = this.game.rnd.integerInRange(-1000,1000);
         
         this.comets.add(comet); // Add this comet to the comet group
         
@@ -152,7 +152,15 @@ Gravital.MainMenu.prototype =
             comet.emitter.setYSpeed(-comet.body.velocity.y * cometSpread, comet.body.velocity.y * cometSpread);
             
             //this.applyGravity(comet, this.player); // Gravity
-            //this.checkBounds(comet); // Wrap around game boundaries
+            this.checkBounds(comet); // Wrap around game boundaries
+        if (comet.body.velocity.x < 400 && comet.body.velocity.x > -400)
+        {
+            comet.body.velocity.x = this.game.rnd.integerInRange(-1000,1000);
+        }
+        if (comet.body.velocity.y <400 && comet.body.velocity.y > -400)
+        {
+            comet.body.velocity.y = this.game.rnd.integerInRange(-1000,1000);
+        }
 	},
     createGasPlanet: function(x,y)
 	{
