@@ -146,7 +146,7 @@ Gravital.Game.prototype =
         this.createGasPlanet(1100,400);
         
         // Create special objects
-        this.createSatellite(400,400,65,65,500,500);
+        this.createSatellite(1000,800,-120,-120,500,500);
         this.createUFO(1200, 1200, -80, -80, 300, 500);
         
         // Create black holes
@@ -544,8 +544,12 @@ Gravital.Game.prototype =
         return ufo;
     },
     ufoCollide: function(playerBody, ufoBody) {
-        playerBody.x = this.game.rnd.integerInRange(0, this.game.world.width);
-        playerBody.y = this.game.rnd.integerInRange(0, this.game.world.height);
+//        playerBody.x = this.game.rnd.integerInRange(0, this.game.world.width);
+//        playerBody.y = this.game.rnd.integerInRange(0, this.game.world.height);
+        playerBody.x = 0;
+        playerBody.y = 0;
+        playerBody.velocity.x = 30;
+        playerBody.velocity.y = 30;
         ufoBody.sprite.sound.play();
     },
     setupMass: function(sprite) {
