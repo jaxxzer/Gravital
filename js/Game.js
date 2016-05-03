@@ -130,8 +130,8 @@ Gravital.Game.prototype =
         
         // Create comets
         var comet = this.createComet(500,500);
-        comet.body.velocity.x = 800;
-        comet.body.velocity.y = -1200;
+        comet.body.velocity.x = 200;
+        comet.body.velocity.y = 300;
         
         var comet2 = this.createComet(0,0);
         comet2.body.velocity.x = 1000;
@@ -145,7 +145,7 @@ Gravital.Game.prototype =
         this.createGasPlanet(1100,400);
         
         // Create special objects
-        this.createUFO(400,400,10,10,500,500);
+        this.createSatellite(400,400,10,10,500,500);
         
         // Create black holes
         this.createBlackHole(400, 800, 0, 0, 1000, 3000);
@@ -461,7 +461,7 @@ Gravital.Game.prototype =
         this.blackHoles.add(blackHole);
         return blackHole;
     },
-    createUFO: function(x, y, vx, vy, mass, density) {
+    createSatellite: function(x, y, vx, vy, mass, density) {
         
         var ufo = this.game.add.sprite(x, y, 'Satellite1');
         ufo.animations.add('spin');
@@ -494,6 +494,7 @@ Gravital.Game.prototype =
         
         return ufo;
     },
+    
     setupMass: function(sprite) {
         this.game.physics.p2.enable(sprite);
         sprite.px1000 = this.getImageScale1000px(sprite);
@@ -531,6 +532,7 @@ Gravital.Game.prototype =
 	{
         this.animateText(body2.x, body2.y, body2.mass.toFixed(1));
         body1.mass += body2.mass;
+        this.updateSize(body1.sprite); // player grows
 		body2.sprite.kill();
 	},
 	absorbAsteroid: function(body1, body2)
@@ -548,9 +550,10 @@ Gravital.Game.prototype =
     absorbGasPlanet: function(playerBody, gasPlanetBody) {
         if(playerBody.sprite.height >= gasPlanetBody.sprite.height) {
             playerBody.mass += gasPlanetBody.mass;
+            this.updateSize(playerBody.sprite);
             this.resetGasPlanet(gasPlanetBody.sprite);
         } else {
-            this.music.stop();
+            //this.music.stop();
             //this.game.state.start('Loss');
             //this.game.state.start('MainMenu');
         }
