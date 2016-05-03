@@ -700,8 +700,8 @@ Gravital.Game.prototype =
     },
     updateScore: function ()
     {
-        this.scoreText.x = this.game.camera.x + this.scoreText.width;
-        this.scoreText.y = this.game.camera.y + this.scoreText.height;
+        this.scoreText.x = this.game.camera.x + 500;
+        this.scoreText.y = this.game.camera.y;
         this.scoreText.setText( "Mass: " + this.player.body.mass.toFixed(2)
                               + "\tRadius: " + (this.player.height/2).toFixed(2));
     },
