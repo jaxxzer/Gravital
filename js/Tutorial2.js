@@ -1,7 +1,7 @@
 var Gravital = Gravital || {};
-Gravital.Tutorial = function () {};
+Gravital.Tutorial2 = function () {};
 
-Gravital.Tutorial.prototype = 
+Gravital.Tutorial2.prototype = 
 {	
 	create: function()
 	{
@@ -45,7 +45,7 @@ Gravital.Tutorial.prototype =
 		com.emitter.start(false, 1000, 10);
 		
 		//Commet text
-		var ctext = "This is a comet. You can absorb it, too.\nIt travels at high velocity and leaves behind small dust as it travels."
+		var ctext = "This is a comet. You can absorb it, too.\nIt leaves residue as it flies."
 		var cstyle = { font: "20px Arial", fill: "#fff", align: "left" };
 		var ct = this.game.add.text(360, this.game.height-140, ctext, cstyle);
 		ct.anchor.set(0.5);	
@@ -70,7 +70,7 @@ Gravital.Tutorial.prototype =
 		//Start the game!
 		if (this.game.input.activePointer.justPressed())
 		{
-			this.game.state.start('Tutorial2');
+			this.game.state.start('Game');
 		}
 		
 	}

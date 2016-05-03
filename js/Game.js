@@ -21,13 +21,16 @@ Gravital.Game.prototype =
 		this.player;
 		this.text; // Debug text
 		
+        this.sizeX = 5000;
+        this.sizeY = 5000;
+        
 		this.worldBuffer = 150; // Buffer for respawning masses beyond edge of game area
 		
 		//var G = 0.50;
 		this.G = 10000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
-		this.numAsteroids = 50; // Number of masses other than the player that will be created
+		this.numAsteroids = 500; // Number of masses other than the player that will be created
 		this.asteroids; // Group of all asteroids
 		this.asteroidCollisionGroup; // CollisionGroup for the masses
 
@@ -63,7 +66,7 @@ Gravital.Game.prototype =
         this.music = this.add.audio('soundtrack1');
         this.music.play();
         
-		this.tilesprite = this.game.add.tileSprite(0,0,4000, 4000, 'space');
+		this.tilesprite = this.game.add.tileSprite(0,0, this.sizeX * 2, this.sizeY * 2, 'space');
         this.tilesprite.scale.setTo(1, 1);
         
         // Create sound sprite for blip noise
@@ -72,7 +75,7 @@ Gravital.Game.prototype =
     	this.sound.addMarker('asteroidHit', 0.0, 1.0);
         
         // Set the playable area
-        this.game.world.setBounds(0, 0, 2000,2000);
+        this.game.world.setBounds(0, 0, this.sizeX, this.sizeY);
         
         this.game.physics.startSystem(Phaser.Physics.P2JS);
         
@@ -136,12 +139,16 @@ Gravital.Game.prototype =
         
         // Create comets
         var comet = this.createComet(500,500);
-        comet.body.velocity.x = 50;
-        comet.body.velocity.y = -50;
+        comet.body.velocity.x = 500;
+        comet.body.velocity.y = -1200;
         
         var comet2 = this.createComet(0,0);
-        comet2.body.velocity.x = 500;
+        comet2.body.velocity.x = 1000;
         comet2.body.velocity.y = 500;
+        
+        var comet3 = this.createComet(5000, 5600);
+        comet3.body.velocity.x = -1800;
+        comet3.body.velocity.y = 1900;
         
         // Create gas giants
         this.createGasPlanet(1100,400);
@@ -523,13 +530,13 @@ Gravital.Game.prototype =
     },
 	absorbGas: function(body1, body2)
 	{
-        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(1));
         body1.mass += body2.mass;
 		body2.sprite.kill();
 	},
 	absorbAsteroid: function(body1, body2)
 	{
-        this.animateText(body2.x, body2.y, body2.mass.toFixed(0));
+        this.animateText(body2.x, body2.y, body2.mass.toFixed(1));
 		this.sound.play('asteroidHit');
         if(this.player.body.mass < 10000) {
             body1.mass += body2.mass; // Player absorbs mass
@@ -545,7 +552,8 @@ Gravital.Game.prototype =
             this.resetGasPlanet(gasPlanetBody.sprite);
         } else {
             this.music.stop();
-            //this.game.state.start('MainMenu');
+            this.game.state.start('Loss');
+            this.game.state.start('MainMenu');
         }
     },
     gameOver: function() {

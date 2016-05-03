@@ -6,6 +6,7 @@ Gravital.game.state.add('Boot', Gravital.Boot);
 Gravital.game.state.add('Preload', Gravital.Preload);
 Gravital.game.state.add('MainMenu', Gravital.MainMenu);
 Gravital.game.state.add('Tutorial', Gravital.Tutorial);
+Gravital.game.state.add('Tutorial2', Gravital.Tutorial2);
 Gravital.game.state.add('Game', Gravital.Game);
 
 Gravital.game.state.start('Boot');
