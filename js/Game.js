@@ -30,7 +30,7 @@ Gravital.Game.prototype =
 		this.G = 10000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
-		this.numAsteroids = 500; // Number of masses other than the player that will be created
+		this.numAsteroids = 800; // Number of masses other than the player that will be created
 		this.asteroids; // Group of all asteroids
 		this.asteroidCollisionGroup; // CollisionGroup for the masses
 
@@ -108,10 +108,10 @@ Gravital.Game.prototype =
         
         // P2 physics suits all masses
         this.game.physics.p2.enable(this.player); 
-        this.player.body.x = 1500;
-        this.player.body.y = 1500;
-		this.player.x = 1500;
-        this.player.y = 1500;
+        this.player.body.x = 1000;
+        this.player.body.y = 1000;
+		this.player.x = 1000;
+        this.player.y = 1000;
         
         // Initialize relative physical parameters of the player
         this.player.body.mass = this.playerStartMass;
@@ -139,12 +139,12 @@ Gravital.Game.prototype =
         
         // Create comets
         var comet = this.createComet(500,500);
-        comet.body.velocity.x = 500;
+        comet.body.velocity.x = 800;
         comet.body.velocity.y = -1200;
         
         var comet2 = this.createComet(0,0);
         comet2.body.velocity.x = 1000;
-        comet2.body.velocity.y = 500;
+        comet2.body.velocity.y = 800;
         
         var comet3 = this.createComet(5000, 5600);
         comet3.body.velocity.x = -1800;
