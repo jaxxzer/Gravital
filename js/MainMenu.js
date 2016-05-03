@@ -17,9 +17,9 @@ Gravital.MainMenu.prototype =
 		
 		// scroll background
 			
-		// add physics
-		this.game.physics.startSystem(Phaser.Physics.P2JS);
-		
+		// buffer
+		this.worldBuffer = 50; 
+        
 		// show game start text
 		var text = "Click for tutorial";
 		var style = { font: "30px Arial", fill: "#fff", align: "center" };
@@ -34,19 +34,38 @@ Gravital.MainMenu.prototype =
 		//h.anchor.set(0.5);
 		
         
-		
+        // gmae to look like actual game
+        //this.game.world.setBounds(0, 0, 800,800);
+        
+        this.game.physics.startSystem(Phaser.Physics.P2JS);
+        
+        
+        this.asteroidCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.gasCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.gasPlanetCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.cometCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.satelliteCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.blackHoleCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        this.ufoCollisionGroup = this.game.physics.p2.createCollisionGroup();
+        
+         
+        this.game.physics.p2.updateBoundsCollisionGroup(); // So sprites will still collide with world bounds
+        this.game.physics.p2.setImpactEvents(true);
+        
+		 this.comets = this.game.add.group();
+        this.asteroids = this.game.add.group();
+        
+       
 		// random stuff on menu screen
-		this.asteroids = this.game.add.group();
-		for (var i = 0; i < 1; i++) {
+		for (var i = 0; i < 5; i++) {
             this.createAsteroid(this.game.rnd.integerInRange(0,this.game.world.width), this.game.rnd.integerInRange(0,this.game.world.height));
         }
 		
 		this.comets = this.game.add.group();
-		for (var i = 0; i <10; i ++)
+		for (var i = 0; i <3; i ++)
 		{
 			this.createComet(this.game.rnd.integerInRange(0,this.game.world.width), this.game.rnd.integerInRange(0,this.game.world.height));
 		}
-		
         
 		
 	},
@@ -113,7 +132,8 @@ Gravital.MainMenu.prototype =
     getImageScale1000px: function (sprite) {
         sprite.scale.setTo(1);
         return 1000.0 / sprite.height;  
-    },updateComets: function()
+    },
+    updateComets: function()
 	{
         this.comets.forEachExists(this.updateComet,this);
 	},
@@ -133,13 +153,37 @@ Gravital.MainMenu.prototype =
             //this.applyGravity(comet, this.player); // Gravity
             //this.checkBounds(comet); // Wrap around game boundaries
 	},
+    updateAsteroids: function()
+	{
+		this.asteroids.forEachExists(this.updateAsteroid, this);
+	},
+	updateAsteroid: function(asteroid)
+	{
+		//this.applyGravity(asteroid, this.player); // Gravity
+		this.checkBounds(asteroid); // Wrap around game boundaries
+	},
 	update: function() 
 	{
 		if (this.game.input.activePointer.justPressed())
 		{
 			this.game.state.start('Tutorial');
 		}
-		
+        this.updateAsteroids();
         this.updateComets();
-	}
+		
+	},
+    checkBounds: function (sprite) 
+	{
+        if(sprite.body.x < 0 - this.worldBuffer) {
+            sprite.body.x = this.game.world.width + this.worldBuffer;
+        } else if(sprite.body.x > this.game.world.width + this.worldBuffer) {
+            sprite.body.x = 0 - this.worldBuffer;
+        }
+
+        if(sprite.body.y < 0 - this.worldBuffer) {
+            sprite.body.y = this.game.world.height + this.worldBuffer;
+        } else if(sprite.body.y > this.game.world.height + this.worldBuffer) {
+            sprite.body.y = 0 - this.worldBuffer;
+        } 
+    },
 };
