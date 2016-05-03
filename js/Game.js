@@ -6,21 +6,12 @@ Gravital.Game.prototype =
 	create: function()
 	{
 		// declare variables;
-		
-//        var spriteTest1 = this.game.add.sprite(400, 600, 'ball');
-//        spriteTest1.anchor.setTo(0.5);
-//        spriteTest1.px1000 = this.getImageScale1000px(spriteTest1);
-//        spriteTest1.scale.setTo(spriteTest1.px1000);
-//        
-//        var spriteTest2 = this.game.add.sprite(500, 500, 'ball');
-//        spriteTest2.anchor.setTo(0.5);
-//        spriteTest2.px1000 = this.getImageScale1000px(spriteTest2);
-//        spriteTest2.scale.setTo(spriteTest1.px1000*0.5);
-        
-        //this.game.stage.scale.startFullScreen();
+
 		this.player;
-		this.text; // Debug text
+		this.debugText; // Debug text
+        this.scoreText; // Score text
 		
+        // Size of game world in pixels
         this.sizeX = 5000;
         this.sizeY = 5000;
         
@@ -30,7 +21,7 @@ Gravital.Game.prototype =
 		this.G = 10000; // Gravitational constant
 		this.accel_max = 200.0; // Factor to limit acceleration on sprites, so they don't wizz off
 		
-		this.numAsteroids = 800; // Number of masses other than the player that will be created
+		this.numAsteroids = 400; // Number of masses other than the player that will be created
 		this.asteroids; // Group of all asteroids
 		this.asteroidCollisionGroup; // CollisionGroup for the masses
 
@@ -162,9 +153,12 @@ Gravital.Game.prototype =
         // Add some text using a CSS style.
         // Center it in X, and position its top 15 pixels from the top of the world.
         var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
-        this.text = this.game.add.text( this.game.world.centerX, 15, "Build something awesome.", style );
-        this.text.anchor.setTo(0.5, 0.0);
+        this.debugText = this.game.add.text( this.game.world.centerX, 15, "", style );
+        this.debugText.anchor.setTo(0.5, 0.0);
         
+        style = { font: "25px Verdana", fill: "#ea09ff", align: "center" };
+        this.scoreText = this.game.add.text( this.game.world.centerX, 15, "", style );
+        this.scoreText.anchor.setTo(0.5, 0.0);
         
         // fullscreen support
         
@@ -191,19 +185,25 @@ Gravital.Game.prototype =
     },
 	update: function()
 	{	
+        // Reset player force so we can calculate new gravitational pull
 		this.player.body.force.x = 0;
         this.player.body.force.y = 0;
+        
+        // Calculate gravitational pull of all objects, and update special properties
 		this.updateAsteroids();
         this.updateComets();
         this.updateGasPlanets();
         this.updateSpecialObjects();
         this.updateBlackHoles();
         
+        // User input
         this.updatePlayer();
 		this.game.world.wrap(this.player.body, -50, false, true, true); //Make the world wrap around
+        
+        this.updateScore();
 		
-        this.scaleAll();
-        this.debugGame(); // Display some text with information
+        //this.scaleAll(); // Update global scale factor and scale all sprites in order to 'zoom out'
+        this.debugGame(); // Update Debug output
 	},
     
 	updatePlayer: function()
@@ -512,7 +512,6 @@ Gravital.Game.prototype =
                 nextgas.body.velocity.y = GasPlanet.body.velocity.y;
 
                 nextgas.revive();
-                this.text.setText(GasPlanet.height + "," + this.player.height);
 
                 GasPlanet.body.mass -= nextgas.body.mass;
                 if(GasPlanet.body.mass <= 0) {
@@ -552,8 +551,8 @@ Gravital.Game.prototype =
             this.resetGasPlanet(gasPlanetBody.sprite);
         } else {
             this.music.stop();
-            this.game.state.start('Loss');
-            this.game.state.start('MainMenu');
+            //this.game.state.start('Loss');
+            //this.game.state.start('MainMenu');
         }
     },
     gameOver: function() {
@@ -563,7 +562,7 @@ Gravital.Game.prototype =
         
     },
     scaleAll: function() {
-        this.globalScaleFactor = 10/Math.sqrt(this.player.body.mass);
+        this.globalScaleFactor = 10/Math.sqrt(player.body.mass);
         this.asteroids.forEach(this.updateSize, this, false);
         this.gasPlanets.forEach(
             function(gasPlanet) {
@@ -687,14 +686,21 @@ Gravital.Game.prototype =
 	},
 	debugGame: function () 
 	{
-//        this.text.setText("\
+//        this.debugText.setText("\
 //                        player.mass: " 
 //                    + this.player.body.mass.toFixed(4)
 //                    + "\nplayer.radius: "
 //                    + this.player.height/2
 //                    + "\nx: " + this.player.x + " y: " + this.debugText);
-        this.text.x = this.game.camera.x + this.text.width;
-        this.text.y = this.game.camera.y + this.game.camera.height - this.text.height;
+        this.debugText.x = this.game.camera.x + this.debugText.width;
+        this.debugText.y = this.game.camera.y + this.game.camera.height - this.debugText.height;
+    },
+    updateScore: function ()
+    {
+        this.scoreText.x = this.game.camera.x + this.scoreText.width;
+        this.scoreText.y = this.game.camera.y + this.scoreText.height;
+        this.scoreText.setText( "Mass: " + this.player.body.mass.toFixed(2)
+                              + "\tRadius: " + (this.player.height/2).toFixed(2));
     },
 	
 	 // Returns the angle between two objects
